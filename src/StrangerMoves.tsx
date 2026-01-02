@@ -1,4 +1,6 @@
 import React from "react";
+import { CheckboxList } from "./CheckboxList";
+import { cn } from "./cn";
 
 type MoveId = string;
 
@@ -17,8 +19,21 @@ const Trigger = ({ children }: { children: React.ReactNode }) => (
   <em className="text-stone-900 dark:text-stone-100 font-medium">{children}</em>
 );
 
-const Tag = ({ children }: { children: React.ReactNode }) => (
-  <span className="font-black text-stone-900 dark:text-stone-100">
+const Tag = ({
+  children,
+  handwritten = false,
+}: {
+  children: React.ReactNode;
+  handwritten?: boolean;
+}) => (
+  <span
+    className={cn(
+      "text-stone-900 dark:text-stone-100",
+      handwritten
+        ? "font-hand text-lg leading-none [text-box-trim:trim-end] -translate-y-px text-stone-700 dark:text-stone-300 [text-box-edge:cap_alphabetic]"
+        : "italic"
+    )}
+  >
     {children}
   </span>
 );
@@ -106,7 +121,7 @@ const DungeonMotion = () => {
                 <Trigger>you're humbled, de-fanged, or show mercy</Trigger>,
                 lose all Fear. Spend Fear 1-for-1 to:
               </p>
-              <ul className="mt-3 space-y-1 pl-4">
+              <ul className="mt-3 space-y-1">
                 <li className="flex items-start gap-2">
                   <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
                   Draw all attention to yourself
@@ -263,7 +278,7 @@ const DungeonMotion = () => {
                 a value of 2. You needn't Requisition this item, instead choose
                 a number of options equal to its value:
               </p>
-              <ul className="mt-3 space-y-1 pl-4 text-sm">
+              <ul className="mt-3 space-y-1 text-sm">
                 <li className="flex items-start gap-2">
                   <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
                   Time has taken its toll. Add or remove a tag to reflect this
@@ -288,21 +303,35 @@ const DungeonMotion = () => {
                 <Tag>dangerous</Tag> tag when handling poisons. Gain access to
                 the following in addition to nightshade oil:
               </p>
-              <ul className="mt-3 space-y-1 pl-4 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
-                  <strong>Corpse root</strong> (
-                  <Tag>ingested, slow, dangerous</Tag>) results in a temporary
-                  death-like state.
+              <ul className="mt-3 space-y-1 text-sm">
+                <li>
+                  <div className="flex items-start gap-2">
+                    <span className="text-stone-400 dark:text-stone-500">
+                      ◈
+                    </span>{" "}
+                    <strong>Corpse root</strong>
+                    <Tag handwritten>ingested, slow, dangerous</Tag>
+                  </div>
+                  results in a temporary death-like state. death-like state.
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
-                  <strong>Nailadd venom</strong> (<Tag>contact, dangerous</Tag>)
+                <li>
+                  <div className="flex items-start gap-2">
+                    <span className="text-stone-400 dark:text-stone-500">
+                      ◈
+                    </span>{" "}
+                    <strong>Nailadd venom</strong>
+                    <Tag handwritten>contact, dangerous</Tag>
+                  </div>
                   results in +1d4 damage and numbness when injected.
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
-                  <strong>Fireweed</strong> (<Tag>burned, dangerous</Tag>)
+                <li>
+                  <div className="flex items-start gap-2">
+                    <span className="text-stone-400 dark:text-stone-500">
+                      ◈
+                    </span>{" "}
+                    <strong>Fireweed</strong>
+                    <Tag handwritten>burned, dangerous</Tag>
+                  </div>
                   creates black caustic smoke that repels pests and vermin.
                 </li>
               </ul>
@@ -362,7 +391,7 @@ const DungeonMotion = () => {
                 list below; <strong>on a 10+</strong>, you also gain advantage
                 on your next roll against it.
               </p>
-              <ul className="mt-3 space-y-1 pl-4">
+              <ul className="mt-3 space-y-1">
                 <li className="flex items-start gap-2">
                   <span className="text-stone-400 dark:text-stone-500">◈</span>{" "}
                   Fight you for dominance
@@ -429,7 +458,7 @@ const DungeonMotion = () => {
         {/* Monster Compendium */}
         <section className="mb-16">
           <div className="border border-stone-300 dark:border-stone-700 p-8 relative">
-            <div className="absolute top-0 -translate-y-1/2 left-8 px-4 bg-stone-100 dark:bg-stone-800 border pb-1 pt-2.5 leading-none border-stone-300 dark:border-stone-700">
+            <div className="absolute top-0 -translate-y-1/2 left-8 px-4 bg-stone-50 dark:bg-stone-900 border pb-1 pt-2.5 leading-none border-stone-300 dark:border-stone-700">
               <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                 Monster Compendium
               </h2>
@@ -461,8 +490,9 @@ const DungeonMotion = () => {
                       <Tag>unnatural</Tag>
                     </span>
                   </h4>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-stone-600 dark:text-stone-400 text-sm">
-                    {[
+                  <CheckboxList
+                    variant="traits"
+                    items={[
                       "agile",
                       "amorphous",
                       "amphibious",
@@ -485,16 +515,8 @@ const DungeonMotion = () => {
                       "tireless",
                       "unnatural",
                       "wild",
-                    ].map((trait) => (
-                      <label
-                        key={trait}
-                        className="flex items-center gap-1 cursor-pointer"
-                      >
-                        <input type="checkbox" className="w-3 h-3" />
-                        {trait}
-                      </label>
-                    ))}
-                  </div>
+                    ]}
+                  />
                 </div>
 
                 <Divider />
@@ -506,61 +528,49 @@ const DungeonMotion = () => {
                       pick 2
                     </span>
                   </h4>
-                  <div className="space-y-2 text-sm">
-                    {[
+                  <CheckboxList
+                    variant="armament"
+                    items={[
                       {
-                        name: "Draining Touch",
-                        stats: "d6+2 (hand, magic, ignores armor)",
+                        name: "Draining Touch:",
+                        detail: "d6+2 (hand, magic, ignores armor)",
                       },
                       {
-                        name: "Cloven Hooves",
-                        stats: "d8+3 (forceful, close)",
+                        name: "Cloven Hooves:",
+                        detail: "d8+3 (forceful, close)",
                       },
                       {
-                        name: "Chitinous Shell or Thick Hide",
-                        stats: "Armor 2",
+                        name: "Chitinous Shell or Thick Hide:",
+                        detail: "Armor 2",
                       },
                       {
-                        name: "Sharpened Horns",
-                        stats: "d8+3 (close, 2 piercing)",
+                        name: "Sharpened Horns:",
+                        detail: "d8+3 (close, 2 piercing)",
                       },
                       {
-                        name: "Lashing Tongue",
-                        stats: "d8+1 (reach, 1 piercing)",
+                        name: "Lashing Tongue:",
+                        detail: "d8+1 (reach, 1 piercing)",
                       },
                       {
-                        name: "Leathery Wings",
-                        stats: "allow for short bouts of flight",
+                        name: "Leathery Wings:",
+                        detail: "allow for short bouts of flight",
                       },
                       {
-                        name: "Jagged Teeth",
-                        stats: "d8+2 (hand, messy, 1 piercing)",
+                        name: "Jagged Teeth:",
+                        detail: "d8+2 (hand, messy, 1 piercing)",
                       },
-                      { name: "Thick Tail", stats: "d8+1 (reach, forceful)" },
-                      { name: "Razor Claws", stats: "d8+2 (close, messy)" },
+                      { name: "Thick Tail:", detail: "d8+1 (reach, forceful)" },
+                      { name: "Razor Claws:", detail: "d8+2 (close, messy)" },
                       {
-                        name: "Regeneration",
-                        stats: "+4HP/heal injuries on Recovery",
+                        name: "Regeneration:",
+                        detail: "+4HP/heal injuries on Recovery",
                       },
                       {
-                        name: "Grasping Pseudopods",
-                        stats: "d6+1 (reach, grabby)",
+                        name: "Grasping Pseudopods:",
+                        detail: "d6+1 (reach, grabby)",
                       },
-                    ].map((item) => (
-                      <div
-                        key={item.name}
-                        className="flex gap-2 text-stone-700 dark:text-stone-300"
-                      >
-                        <input type="checkbox" className="w-3 h-3 mt-0.75" />
-                        <span>
-                          <strong>{item.name}:</strong>{" "}
-                          <span className="text-stone-500 dark:text-stone-400">
-                            {item.stats}
-                          </span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                    ]}
+                  />
                 </div>
 
                 <Divider />
@@ -572,8 +582,9 @@ const DungeonMotion = () => {
                       pick 1, fulfill it to revert to human form
                     </span>
                   </h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm text-stone-700 dark:text-stone-300">
-                    {[
+                  <CheckboxList
+                    variant="instinct"
+                    items={[
                       "To challenge rivals",
                       "To be worshiped",
                       "To run with the pack",
@@ -581,16 +592,8 @@ const DungeonMotion = () => {
                       "To rampage",
                       "To devour (pick 1)",
                       "To wreak mischief",
-                    ].map((instinct) => (
-                      <label
-                        key={instinct}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <input type="checkbox" className="w-3 h-3 -mt-0.5" />
-                        {instinct}
-                      </label>
-                    ))}
-                  </div>
+                    ]}
+                  />
                 </div>
 
                 <Divider />
@@ -602,22 +605,16 @@ const DungeonMotion = () => {
                       pick 1 or 2, Defy Danger to act against it
                     </span>
                   </h4>
-                  <div className="space-y-2 text-sm text-stone-700 dark:text-stone-300">
-                    {[
-                      { name: "Bronze implements", effect: "burn the flesh" },
-                      { name: "Bendis root", effect: "compels you to flee" },
-                      { name: "Bell sounds", effect: "render you mindless" },
-                      { name: "Holy symbols", effect: "binds you" },
-                      { name: "Your true name", effect: "commands obedience" },
-                    ].map((bane) => (
-                      <div key={bane.name} className="flex gap-2">
-                        <input type="checkbox" className="w-3 h-3 mt-0.5" />
-                        <span>
-                          <strong>{bane.name}</strong> {bane.effect}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <CheckboxList
+                    variant="bane"
+                    items={[
+                      { name: "Bronze implements", detail: "burn the flesh" },
+                      { name: "Bendis root", detail: "compels you to flee" },
+                      { name: "Bell sounds", detail: "render you mindless" },
+                      { name: "Holy symbols", detail: "binds you" },
+                      { name: "Your true name", detail: "commands obedience" },
+                    ]}
+                  />
                 </div>
               </div>
 
@@ -630,140 +627,121 @@ const DungeonMotion = () => {
                   </span>
                 </h4>
 
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Craving
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      When you indulge your instinct you may go without
-                      sustenance and heal as if you had made camp. If you go
-                      without for a season, mark a debility. If you cannot,
-                      grant control of your character to the GM until your
-                      instinct is satisfied.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Deadly
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      When you deal damage with the intent to kill, increase all
-                      damage dice by one size.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Formless
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      You can squeeze, flow, or ooze through surprisingly tight
-                      spaces without issue. Also gain +1 Armor when you go
-                      unarmored thanks to supernatural resilience.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Implements of Evil
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      Choose 2 additional monstrous armaments from the
-                      Stranger's Monster Compendium insert.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Monster Squad
-                      </h5>
-                      <span className="text-xs text-stone-500 dark:text-stone-400 ml-auto">
-                        Reign ○○
-                      </span>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      You hold domain over creatures of the night. When{" "}
-                      <Trigger>
-                        you call forth nocturnal scavengers or a pestilent swarm
-                      </Trigger>{" "}
-                      roll +CHA: <strong>on a 7+</strong>, they appear and sew
-                      chaos on your behalf but hold 1 Reign;{" "}
-                      <strong>on a 10+</strong>, hold 2 Reign;{" "}
-                      <strong>on a 6-</strong>, they sew chaos on your behalf
-                      but hold no Reign and mark XP. Spend Reign to: Shield
-                      something or someone from the chaos, or Provide aid to
-                      yourself or an ally.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Nightbreed
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      You can smell and track blood from miles away and when you
-                      taste blood and <Trigger>Seek Insight</Trigger> you may
-                      roll +CON. If you do you can always ask "What is the
-                      extent of their injuries?" for free, even on a 6-.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Night Crawler
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      When you{" "}
-                      <Trigger>
-                        climb, cling to, or skitter across a sheer surface
-                      </Trigger>{" "}
-                      you cannot fall and you make any rolls to hide, hunt prey,
-                      or traverse terrain with advantage.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <input type="checkbox" className="size-4 mt-[-3px]" />
-                      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                        Release the Beast
-                      </h5>
-                    </div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed pl-6">
-                      You are capable of exceptional strength.{" "}
-                      <Trigger>
-                        When you lift, throw, or break something in a display of
-                        frightening power
-                      </Trigger>{" "}
-                      your attacks gain the <Tag>forceful</Tag> and{" "}
-                      <Tag>area</Tag> tags and you Let Fly with +STR but the GM
-                      will choose one: What you've done cannot be undone, or You
-                      risk collateral damage in addition to other consequences.
-                    </p>
-                  </div>
-                </div>
+                <CheckboxList
+                  variant="monster-move"
+                  items={[
+                    {
+                      id: "craving",
+                      title: "Craving",
+                      description: (
+                        <>
+                          When you indulge your instinct you may go without
+                          sustenance and heal as if you had made camp. If you go
+                          without for a season, mark a debility. If you cannot,
+                          grant control of your character to the GM until your
+                          instinct is satisfied.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "deadly",
+                      title: "Deadly",
+                      description: (
+                        <>
+                          When you deal damage with the intent to kill, increase
+                          all damage dice by one size.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "formless",
+                      title: "Formless",
+                      description: (
+                        <>
+                          You can squeeze, flow, or ooze through surprisingly
+                          tight spaces without issue. Also gain +1 Armor when
+                          you go unarmored thanks to supernatural resilience.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "implements-of-evil",
+                      title: "Implements of Evil",
+                      description: (
+                        <>
+                          Choose 2 additional monstrous armaments from the
+                          Stranger's Monster Compendium insert.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "monster-squad",
+                      title: "Monster Squad",
+                      trailing: "Reign ○○",
+                      description: (
+                        <>
+                          You hold domain over creatures of the night. When{" "}
+                          <Trigger>
+                            you call forth nocturnal scavengers or a pestilent
+                            swarm
+                          </Trigger>{" "}
+                          roll +CHA: <strong>on a 7+</strong>, they appear and
+                          sew chaos on your behalf but hold 1 Reign;{" "}
+                          <strong>on a 10+</strong>, hold 2 Reign;{" "}
+                          <strong>on a 6-</strong>, they sew chaos on your
+                          behalf but hold no Reign and mark XP. Spend Reign to:
+                          Shield something or someone from the chaos, or Provide
+                          aid to yourself or an ally.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "nightbreed",
+                      title: "Nightbreed",
+                      description: (
+                        <>
+                          You can smell and track blood from miles away and when
+                          you taste blood and <Trigger>Seek Insight</Trigger>{" "}
+                          you may roll +CON. If you do you can always ask "What
+                          is the extent of their injuries?" for free, even on a
+                          6-.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "night-crawler",
+                      title: "Night Crawler",
+                      description: (
+                        <>
+                          When you{" "}
+                          <Trigger>
+                            climb, cling to, or skitter across a sheer surface
+                          </Trigger>{" "}
+                          you cannot fall and you make any rolls to hide, hunt
+                          prey, or traverse terrain with advantage.
+                        </>
+                      ),
+                    },
+                    {
+                      id: "release-the-beast",
+                      title: "Release the Beast",
+                      description: (
+                        <>
+                          You are capable of exceptional strength.{" "}
+                          <Trigger>
+                            When you lift, throw, or break something in a
+                            display of frightening power
+                          </Trigger>{" "}
+                          your attacks gain the <Tag>forceful</Tag> and{" "}
+                          <Tag>area</Tag> tags and you Let Fly with +STR but the
+                          GM will choose one: What you've done cannot be undone,
+                          or You risk collateral damage in addition to other
+                          consequences.
+                        </>
+                      ),
+                    },
+                  ]}
+                />
               </div>
             </div>
           </div>

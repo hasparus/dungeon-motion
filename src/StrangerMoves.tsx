@@ -13,21 +13,21 @@ interface MoveCardProps {
   className?: string;
 }
 
-const Trigger: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Trigger = ({ children }: { children: React.ReactNode }) => (
   <em className="text-stone-900 dark:text-stone-100 font-medium">{children}</em>
 );
 
-const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Tag = ({ children }: { children: React.ReactNode }) => (
   <span className="font-black text-stone-900 dark:text-stone-100">
     {children}
   </span>
 );
 
-const Divider: React.FC = () => (
+const Divider = () => (
   <div className="border-t border-stone-300 dark:border-stone-600 my-8" />
 );
 
-const SectionDivider: React.FC = () => (
+const SectionDivider = () => (
   <div className="flex items-center gap-4 my-12">
     <div className="flex-1 border-t border-stone-400 dark:border-stone-600" />
     <div className="w-2 h-2 rotate-45 border border-stone-400 dark:border-stone-600" />
@@ -35,7 +35,7 @@ const SectionDivider: React.FC = () => (
   </div>
 );
 
-const MoveCard: React.FC<MoveCardProps> = ({
+const MoveCard = ({
   id,
   title,
   children,
@@ -44,16 +44,10 @@ const MoveCard: React.FC<MoveCardProps> = ({
   resourceName = "",
   resourceCount = 0,
   className = "",
-}) => (
+}: MoveCardProps) => (
   <div className={`group ${className}`}>
     <div className="flex items-start gap-3">
-      <input
-        type="checkbox"
-        id={id}
-        name="stranger-move"
-        value={id}
-        className="w-5 h-5"
-      />
+      <input type="checkbox" id={id} value={id} className="w-5 h-5 mt-0.5" />
       <div className="flex-1">
         <div className="flex items-baseline justify-between gap-4 flex-wrap">
           <h3 className="text-xl tracking-wide font-bold text-stone-800 dark:text-stone-100">
@@ -86,18 +80,10 @@ const MoveCard: React.FC<MoveCardProps> = ({
   </div>
 );
 
-const StrangerMoves: React.FC = () => {
+const DungeonMotion = () => {
   return (
-    <form className="min-h-screen bg-linear-to-b from-stone-100 via-stone-50 to-stone-100 dark:from-stone-900 dark:via-stone-800 dark:to-stone-900">
-      {/* Grain texture overlay */}
-      <div
-        className="fixed inset-0 pointer-events-none opacity-50 dark:opacity-30 dark:invert"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          filter: "contrast(170%) brightness(1000%)",
-          mixBlendMode: "multiply",
-        }}
-      />
+    <form className="min-h-screen">
+      <GrainOverlay />
 
       <div className="relative max-w-4xl mx-auto px-6 py-16">
         {/* Main Moves */}
@@ -442,8 +428,8 @@ const StrangerMoves: React.FC = () => {
 
         {/* Monster Compendium */}
         <section className="mb-16">
-          <div className="bg-stone-100/60 dark:bg-stone-800/60 border border-stone-300 dark:border-stone-700 p-8 relative">
-            <div className="absolute -top-4 left-8 bg-stone-100 dark:bg-stone-800 px-4">
+          <div className="border border-stone-300 dark:border-stone-700 p-8 relative">
+            <div className="absolute top-0 -translate-y-1/2 left-8 px-4 bg-stone-100 dark:bg-stone-800 border pb-1 pt-2.5 leading-none border-stone-300 dark:border-stone-700">
               <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                 Monster Compendium
               </h2>
@@ -565,7 +551,7 @@ const StrangerMoves: React.FC = () => {
                         key={item.name}
                         className="flex gap-2 text-stone-700 dark:text-stone-300"
                       >
-                        <input type="checkbox" className="w-3 h-3 mt-1" />
+                        <input type="checkbox" className="w-3 h-3 mt-0.75" />
                         <span>
                           <strong>{item.name}:</strong>{" "}
                           <span className="text-stone-500 dark:text-stone-400">
@@ -600,7 +586,7 @@ const StrangerMoves: React.FC = () => {
                         key={instinct}
                         className="flex items-center gap-2 cursor-pointer"
                       >
-                        <input type="checkbox" className="w-3 h-3" />
+                        <input type="checkbox" className="w-3 h-3 -mt-0.5" />
                         {instinct}
                       </label>
                     ))}
@@ -625,7 +611,7 @@ const StrangerMoves: React.FC = () => {
                       { name: "Your true name", effect: "commands obedience" },
                     ].map((bane) => (
                       <div key={bane.name} className="flex gap-2">
-                        <input type="checkbox" className="w-3 h-3 mt-1" />
+                        <input type="checkbox" className="w-3 h-3 mt-0.5" />
                         <span>
                           <strong>{bane.name}</strong> {bane.effect}
                         </span>
@@ -647,7 +633,7 @@ const StrangerMoves: React.FC = () => {
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Craving
                       </h5>
@@ -663,7 +649,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Deadly
                       </h5>
@@ -676,7 +662,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Formless
                       </h5>
@@ -690,7 +676,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Implements of Evil
                       </h5>
@@ -703,7 +689,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Monster Squad
                       </h5>
@@ -728,7 +714,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Nightbreed
                       </h5>
@@ -743,7 +729,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Night Crawler
                       </h5>
@@ -760,7 +746,7 @@ const StrangerMoves: React.FC = () => {
 
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <input type="checkbox" className="w-4 h-4" />
+                      <input type="checkbox" className="size-4 mt-[-3px]" />
                       <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                         Release the Beast
                       </h5>
@@ -799,4 +785,19 @@ const StrangerMoves: React.FC = () => {
   );
 };
 
-export default StrangerMoves;
+export default DungeonMotion;
+
+function GrainOverlay() {
+  return (
+    <div className="fixed inset-0 pointer-events-none opacity-5 invert dark:invert-0 z-100">
+      <div
+        className="w-full h-full"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+          filter: "contrast(170%) brightness(1000%)",
+          mixBlendMode: "overlay",
+        }}
+      />
+    </div>
+  );
+}

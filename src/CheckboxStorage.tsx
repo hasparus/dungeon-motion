@@ -1,44 +1,46 @@
-import React, { useEffect } from 'react';
+import { useEffect } from "react";
 
-const MoveStorage: React.FC = () => {
+const CheckboxStorage = () => {
   useEffect(() => {
-    const form = document.querySelector('form');
+    const form = document.querySelector("form");
     if (!form) return;
 
-    const STORAGE_KEY = 'stranger-moves-selections';
-    const checkboxes = form.querySelectorAll<HTMLInputElement>('input[type="checkbox"][name="stranger-move"]');
+    const STORAGE_KEY = "dungeon-motion-selections";
+    const checkboxes = form.querySelectorAll<HTMLInputElement>(
+      'input[type="checkbox"]'
+    );
 
     // Load saved state from localStorage
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const selected = JSON.parse(saved);
-        checkboxes.forEach(cb => {
+        checkboxes.forEach((cb) => {
           if (selected[cb.value]) {
             cb.checked = true;
           }
         });
       } catch (e) {
-        console.warn('Failed to parse saved moves', e);
+        console.warn("Failed to parse saved moves", e);
       }
     }
 
     // Save state on change
     const handleChange = () => {
       const selected: Record<string, boolean> = {};
-      checkboxes.forEach(cb => {
+      checkboxes.forEach((cb) => {
         selected[cb.value] = cb.checked;
       });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
     };
 
-    checkboxes.forEach(cb => {
-      cb.addEventListener('change', handleChange);
+    checkboxes.forEach((cb) => {
+      cb.addEventListener("change", handleChange);
     });
 
     return () => {
-      checkboxes.forEach(cb => {
-        cb.removeEventListener('change', handleChange);
+      checkboxes.forEach((cb) => {
+        cb.removeEventListener("change", handleChange);
       });
     };
   }, []);
@@ -46,4 +48,4 @@ const MoveStorage: React.FC = () => {
   return null;
 };
 
-export default MoveStorage;
+export default CheckboxStorage;

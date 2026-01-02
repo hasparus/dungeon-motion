@@ -33,11 +33,8 @@ form {
 input[type="checkbox"] {
   appearance: none;
   background-color: transparent;
-  margin: 0;
   font: inherit;
   color: currentColor;
-  width: 1.15em;
-  height: 1.15em;
   border: 0.15em solid currentColor;
   display: grid;
   place-content: center;

@@ -8,3 +8,32 @@ html {
   font-family: var(--font-serif);
   color: var(--color-stone-700);
 }
+
+@media print {
+  @page {
+    size: A4;
+  }
+
+  html {
+    color: black;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  form {
+    background: white !important;
+    min-height: auto !important;
+  }
+
+  .fixed {
+    display: none !important;
+  }
+
+  .border-stone-300,
+  .border-stone-400,
+  .border-stone-500 {
+    border-color: #666 !important;
+  }
+}

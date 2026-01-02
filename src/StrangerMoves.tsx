@@ -129,9 +129,9 @@ const StrangerMoves: React.FC = () => {
 
             <MoveCard id="otherkin" title="Otherkin" className="md:row-span-2">
               <p className="flex items-center gap-2 mb-2">
-                <span className="w-3 h-3 border border-stone-400" />
-                <span className="w-3 h-3 border border-stone-400" />
-                <span className="w-3 h-3 border border-stone-400" />
+                <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700" />
+                <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700" />
+                <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700" />
               </p>
               <p>Your human form is but a guise. Fill out the Stranger's Monster Compendium insert. Each time you select this move, choose a new monster move. You may undergo Metamorphosis at any time to take on your monstrous traits, instinct, bane, moves, etc.</p>
             </MoveCard>
@@ -233,10 +233,10 @@ const StrangerMoves: React.FC = () => {
                   <h4 className="text-lg font-bold text-stone-800 tracking-wide">Traits <span className="font-normal text-sm text-stone-500">pick 2 per bane plus <Tag>terrifying</Tag> and <Tag>unnatural</Tag></span></h4>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-stone-600 text-sm">
                     {['agile', 'amorphous', 'amphibious', 'ancient', 'ethereal', 'fast', 'gluttonous', 'intelligent', 'large', 'magic', 'powerful', 'resilient', 'sharp-eared', 'sharp-eyed', 'sharp-nosed', 'small', 'squamous', 'stealthy', 'terrifying', 'tireless', 'unnatural', 'wild'].map(trait => (
-                      <span key={trait} className="flex items-center gap-1">
-                        <span className="w-3 h-3 border border-stone-400 inline-block" />
+                      <label key={trait} className="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700" />
                         {trait}
-                      </span>
+                      </label>
                     ))}
                   </div>
                 </div>
@@ -260,7 +260,7 @@ const StrangerMoves: React.FC = () => {
                       { name: 'Grasping Pseudopods', stats: 'd6+1 (reach, grabby)' },
                     ].map(item => (
                       <div key={item.name} className="flex gap-2 text-stone-700">
-                        <span className="w-3 h-3 border border-stone-400 flex-shrink-0 mt-1" />
+                        <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700 mt-1" />
                         <span><strong>{item.name}:</strong> <span className="text-stone-500">{item.stats}</span></span>
                       </div>
                     ))}
@@ -273,10 +273,10 @@ const StrangerMoves: React.FC = () => {
                   <h4 className="text-lg font-bold text-stone-800 tracking-wide">Instinct <span className="font-normal text-sm text-stone-500">pick 1, fulfill it to revert to human form</span></h4>
                   <div className="grid grid-cols-2 gap-2 text-sm text-stone-700">
                     {['To challenge rivals', 'To be worshiped', 'To run with the pack', 'To make them cower', 'To rampage', 'To devour (pick 1)', 'To wreak mischief'].map(instinct => (
-                      <div key={instinct} className="flex items-center gap-2">
-                        <span className="w-3 h-3 border border-stone-400 flex-shrink-0" />
+                      <label key={instinct} className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700" />
                         {instinct}
-                      </div>
+                      </label>
                     ))}
                   </div>
                 </div>
@@ -294,7 +294,7 @@ const StrangerMoves: React.FC = () => {
                       { name: 'Your true name', effect: 'commands obedience' },
                     ].map(bane => (
                       <div key={bane.name} className="flex gap-2">
-                        <span className="w-3 h-3 border border-stone-400 flex-shrink-0 mt-1" />
+                        <input type="checkbox" className="w-3 h-3 border border-stone-400 cursor-pointer accent-stone-700 mt-1" />
                         <span><strong>{bane.name}</strong> {bane.effect}</span>
                       </div>
                     ))}

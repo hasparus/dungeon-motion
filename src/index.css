@@ -1,7 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-* {
-  font-family: 'Averia Serif Libre', Georgia, serif;
+@theme {
+  --font-serif: "Avara", Georgia, serif;
+}
+
+html {
+  font-family: var(--font-serif);
+  color: var(--color-stone-700);
 }

@@ -1,26 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 type MoveId = string;
-
-interface CheckboxProps {
-  checked: boolean;
-  onChange: () => void;
-  className?: string;
-}
-
-const Checkbox: React.FC<CheckboxProps> = ({ checked, onChange, className = '' }) => (
-  <button
-    type="button"
-    onClick={onChange}
-    className={`w-5 h-5 border-2 border-stone-500 flex items-center justify-center transition-all duration-200 hover:border-stone-700 ${className}`}
-  >
-    {checked && (
-      <svg className="w-4 h-4 text-stone-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-        <polyline points="20 6 9 17 4 12" />
-      </svg>
-    )}
-  </button>
-);
 
 interface MoveCardProps {
   id: MoveId;
@@ -33,50 +13,12 @@ interface MoveCardProps {
   className?: string;
 }
 
-const MoveCard: React.FC<MoveCardProps> = ({
-  id,
-  title,
-  children,
-  requirement,
-  hasResource = false,
-  resourceName = '',
-  resourceCount = 0,
-  className = '',
-}) => (
-  <div className={`group ${className}`}>
-    <div className="flex items-start gap-3">
-      <Checkbox checked={!!selectedMoves[id]} onChange={() => toggleMove(id)} className="mt-1 flex-shrink-0" />
-      <div className="flex-1">
-        <div className="flex items-baseline justify-between gap-4 flex-wrap">
-          <h3 className="text-xl tracking-wide font-bold text-stone-800 uppercase">{title}</h3>
-          {hasResource && (
-            <div className="flex items-center gap-1 text-stone-500 text-sm">
-              <span className="tracking-wider">{resourceName}</span>
-              <div className="flex gap-0.5 ml-1">
-                {[...Array(resourceCount)].map((_, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full border border-stone-400" />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        {requirement && (
-          <p className="text-sm text-stone-500 italic mt-0.5">(Requires {requirement})</p>
-        )}
-        <div className="mt-2 text-stone-700 leading-relaxed">
-          {children}
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
 const Trigger: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <em className="text-stone-900 font-medium">{children}</em>
 );
 
 const Tag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="italic text-stone-600">{children}</span>
+  <span className="text-stone-600">{children}</span>
 );
 
 const Divider: React.FC = () => (
@@ -91,15 +33,53 @@ const SectionDivider: React.FC = () => (
   </div>
 );
 
+const MoveCard: React.FC<MoveCardProps> = ({
+  id,
+  title,
+  children,
+  requirement,
+  hasResource = false,
+  resourceName = '',
+  resourceCount = 0,
+  className = '',
+}) => (
+  <div className={`group ${className}`}>
+    <div className="flex items-start gap-3">
+      <input
+        type="checkbox"
+        id={id}
+        name="stranger-move"
+        value={id}
+        className="w-5 h-5 border-2 border-stone-500 cursor-pointer accent-stone-700 mt-px flex-shrink-0"
+      />
+      <div className="flex-1">
+        <div className="flex items-baseline justify-between gap-4 flex-wrap">
+          <h3 className="text-xl tracking-wide font-bold text-stone-800">{title}</h3>
+          {hasResource && (
+            <div className="flex items-center gap-1 text-stone-500 text-sm">
+              <span className="tracking-wider">{resourceName}</span>
+              <div className="flex gap-0.5 ml-1">
+                {[...Array(resourceCount)].map((_, i) => (
+                  <div key={i} className="w-3 h-3 rounded-full border border-stone-400" />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {requirement && (
+          <p className="text-sm text-stone-500 mt-0.5">(Requires {requirement})</p>
+        )}
+        <div className="mt-2 text-stone-700 leading-relaxed">
+          {children}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const StrangerMoves: React.FC = () => {
-  const [selectedMoves, setSelectedMoves] = useState<Record<MoveId, boolean>>({});
-
-  const toggleMove = (move: MoveId): void => {
-    setSelectedMoves(prev => ({ ...prev, [move]: !prev[move] }));
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 via-stone-50 to-amber-50">
+    <form className="min-h-screen bg-gradient-to-b from-stone-100 via-stone-50 to-stone-100">
       {/* Subtle texture overlay */}
       <div
         className="fixed inset-0 pointer-events-none opacity-30"
@@ -215,7 +195,7 @@ const StrangerMoves: React.FC = () => {
         {/* Advanced Moves */}
         <section className="mb-16">
           <h2 className="text-3xl font-bold text-stone-800 tracking-wide mb-2 text-center">Advanced Moves</h2>
-          <p className="text-center text-stone-500 mb-8 italic">Requires level 6 or higher</p>
+          <p className="text-center text-stone-500 mb-8">Requires level 6 or higher</p>
 
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
             <MoveCard id="acceptance" title="Acceptance" requirement="level 6+ and Otherkin">
@@ -232,8 +212,8 @@ const StrangerMoves: React.FC = () => {
 
         {/* Monster Compendium */}
         <section className="mb-16">
-          <div className="bg-amber-50/60 border border-stone-300 p-8 relative">
-            <div className="absolute -top-4 left-8 bg-amber-50 px-4">
+        <div className="bg-stone-100/60 border border-stone-300 p-8 relative">
+          <div className="absolute -top-4 left-8 bg-stone-100 px-4">
               <h2 className="text-2xl font-bold text-stone-800 tracking-wide">Monster Compendium</h2>
             </div>
 
@@ -251,7 +231,7 @@ const StrangerMoves: React.FC = () => {
 
                 <div className="space-y-4">
                   <h4 className="text-lg font-bold text-stone-800 tracking-wide">Traits <span className="font-normal text-sm text-stone-500">pick 2 per bane plus <Tag>terrifying</Tag> and <Tag>unnatural</Tag></span></h4>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-stone-600 italic text-sm">
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-stone-600 text-sm">
                     {['agile', 'amorphous', 'amphibious', 'ancient', 'ethereal', 'fast', 'gluttonous', 'intelligent', 'large', 'magic', 'powerful', 'resilient', 'sharp-eared', 'sharp-eyed', 'sharp-nosed', 'small', 'squamous', 'stealthy', 'terrifying', 'tireless', 'unnatural', 'wild'].map(trait => (
                       <span key={trait} className="flex items-center gap-1">
                         <span className="w-3 h-3 border border-stone-400 inline-block" />
@@ -281,7 +261,7 @@ const StrangerMoves: React.FC = () => {
                     ].map(item => (
                       <div key={item.name} className="flex gap-2 text-stone-700">
                         <span className="w-3 h-3 border border-stone-400 flex-shrink-0 mt-1" />
-                        <span><strong>{item.name}:</strong> <span className="text-stone-500 italic">{item.stats}</span></span>
+                        <span><strong>{item.name}:</strong> <span className="text-stone-500">{item.stats}</span></span>
                       </div>
                     ))}
                   </div>
@@ -330,7 +310,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Craving</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Craving</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">When you indulge your instinct you may go without sustenance and heal as if you had made camp. If you go without for a season, mark a debility. If you cannot, grant control of your character to the GM until your instinct is satisfied.</p>
                   </div>
@@ -338,7 +318,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Deadly</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Deadly</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">When you deal damage with the intent to kill, increase all damage dice by one size.</p>
                   </div>
@@ -346,7 +326,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Formless</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Formless</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">You can squeeze, flow, or ooze through surprisingly tight spaces without issue. Also gain +1 Armor when you go unarmored thanks to supernatural resilience.</p>
                   </div>
@@ -354,7 +334,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Implements of Evil</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Implements of Evil</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">Choose 2 additional monstrous armaments from the Stranger's Monster Compendium insert.</p>
                   </div>
@@ -362,7 +342,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Monster Squad</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Monster Squad</h5>
                       <span className="text-xs text-stone-500 ml-auto">Reign ○○</span>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">You hold domain over creatures of the night. When <Trigger>you call forth nocturnal scavengers or a pestilent swarm</Trigger> roll +CHA: <strong>on a 7+</strong>, they appear and sew chaos on your behalf but hold 1 Reign; <strong>on a 10+</strong>, hold 2 Reign; <strong>on a 6-</strong>, they sew chaos on your behalf but hold no Reign and mark XP. Spend Reign to: Shield something or someone from the chaos, or Provide aid to yourself or an ally.</p>
@@ -371,7 +351,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Nightbreed</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Nightbreed</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">You can smell and track blood from miles away and when you taste blood and <Trigger>Seek Insight</Trigger> you may roll +CON. If you do you can always ask "What is the extent of their injuries?" for free, even on a 6-.</p>
                   </div>
@@ -379,7 +359,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Night Crawler</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Night Crawler</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">When you <Trigger>climb, cling to, or skitter across a sheer surface</Trigger> you cannot fall and you make any rolls to hide, hunt prey, or traverse terrain with advantage.</p>
                   </div>
@@ -387,7 +367,7 @@ const StrangerMoves: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 border border-stone-400" />
-                      <h5 className="font-bold text-stone-800 uppercase tracking-wide">Release the Beast</h5>
+                      <h5 className="font-bold text-stone-800 tracking-wide">Release the Beast</h5>
                     </div>
                     <p className="text-sm text-stone-700 leading-relaxed pl-6">You are capable of exceptional strength. <Trigger>When you lift, throw, or break something in a display of frightening power</Trigger> your attacks gain the <Tag>forceful</Tag> and <Tag>area</Tag> tags and you Let Fly with +STR but the GM will choose one: What you've done cannot be undone, or You risk collateral damage in addition to other consequences.</p>
                   </div>
@@ -408,11 +388,10 @@ const StrangerMoves: React.FC = () => {
             </div>
             <div className="w-12 h-px bg-stone-400" />
           </div>
-          <p className="text-sm text-stone-500">Classless Level Up Moves</p>
-          <p className="text-xs text-stone-400 mt-2">Moves from Stonetop · Set in Averia Serif Libre</p>
+          <p className="text-xs text-stone-400 mt-2">Moves from Stonetop · Set in Avara</p>
         </footer>
       </div>
-    </div>
+    </form>
   );
 };
 

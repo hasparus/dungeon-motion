@@ -79,7 +79,7 @@ const MoveCard = ({
   resourceCount = 0,
   className = "",
 }: MoveCardProps) => (
-  <article className={`group ${className}`}>
+  <article className={`group break-inside-avoid ${className} py-4`}>
     <div className="flex items-start gap-3">
       <input
         type="checkbox"
@@ -131,7 +131,7 @@ export const Moves = () => {
       <div className="relative max-w-4xl mx-auto px-6">
         {/* Main Moves */}
         <section className="mb-16">
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+          <div className="md:columns-2 md:gap-x-12">
             <MoveCard
               id="pariah"
               title="Pariah"
@@ -220,7 +220,11 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
-            <MoveCard id="otherkin" title="Otherkin" className="md:row-span-2">
+            <MoveCard
+              id="otherkin"
+              title="Otherkin"
+              className="md:[column-span:all]"
+            >
               <p className="flex items-center gap-2 mb-2">
                 <input type="checkbox" className="w-3 h-3" />
                 <input type="checkbox" className="w-3 h-3" />
@@ -408,7 +412,7 @@ export const Moves = () => {
             Requires level 6 or higher
           </p>
 
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
+          <div className="md:columns-2 md:gap-x-12 gap-6">
             <MoveCard
               id="acceptance"
               title="Acceptance"
@@ -455,7 +459,11 @@ export const Moves = () => {
             <div className="mt-4 grid md:grid-cols-2 gap-8">
               {/* Left Column */}
               <div>
-                <MoveCard id="metamorphosis" title="Metamorphosis">
+                <MoveCard
+                  id="metamorphosis"
+                  title="Metamorphosis"
+                  className="pt-0 pb-0"
+                >
                   <p>
                     There's a monster inside you. When you{" "}
                     <Trigger>reveal the monster within</Trigger> roll +CON:{" "}

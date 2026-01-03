@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "bunx astro dev",
     "build": "bunx astro build",
-    "preview": "bunx astro preview",
-    "install": "bun install"
+    "preview": "bunx astro preview"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",

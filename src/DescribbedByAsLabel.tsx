@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 
-const DescribbedByAsLabel = () => {
+export const DescribbedByAsLabel = () => {
   useEffect(() => {
     const inputs = document.querySelectorAll<HTMLInputElement>(
       "input[aria-describedby]"
@@ -14,8 +14,7 @@ const DescribbedByAsLabel = () => {
     inputs.forEach((input) => {
       const describedBy = input.getAttribute("aria-describedby");
       if (!describedBy) return;
-      const describedElement =
-        document.getElementById<HTMLElement>(describedBy);
+      const describedElement = document.getElementById(describedBy);
       if (describedElement) {
         const handleClick = () => input.click();
         describedElement.addEventListener("click", handleClick);
@@ -36,5 +35,3 @@ const DescribbedByAsLabel = () => {
 
   return null;
 };
-
-export default DescribbedByAsLabel;

@@ -146,3 +146,34 @@ ul.diamond > li::before {
     color: var(--color-stone-500);
   }
 }
+
+a {
+  text-decoration: underline solid var(--color-stone-400) 1px;
+  text-underline-offset: 4px;
+
+  &:hover {
+    color: var(--color-stone-900);
+    text-decoration-color: var(--color-blue-600);
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      color-mix(in srgb, var(--color-blue-500) 10%, transparent 100%) 100%
+    );
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  a {
+    text-decoration-color: var(--color-stone-600);
+
+    &:hover {
+      color: var(--color-stone-50);
+      text-decoration-color: var(--color-orange-400);
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        color-mix(in srgb, var(--color-orange-500) 20%, transparent 100%) 100%
+      );
+    }
+  }
+}

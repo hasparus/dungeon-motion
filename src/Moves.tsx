@@ -1,6 +1,7 @@
 import React from "react";
 import { CheckboxList } from "./CheckboxList";
 import { cn } from "./cn";
+import { SectionDivider } from "./SectionDivider";
 
 type MoveId = string;
 
@@ -40,14 +41,6 @@ const Tag = ({
 
 const Divider = () => (
   <div className="border-t border-stone-300 dark:border-stone-600 my-8" />
-);
-
-const SectionDivider = () => (
-  <div className="flex items-center gap-4 my-12">
-    <div className="flex-1 border-t border-stone-400 dark:border-stone-600" />
-    <div className="w-2 h-2 rotate-45 border border-stone-400 dark:border-stone-600" />
-    <div className="flex-1 border-t border-stone-400 dark:border-stone-600" />
-  </div>
 );
 
 const MonsterMove = ({
@@ -130,12 +123,12 @@ const MoveCard = ({
   </article>
 );
 
-const DungeonMotion = () => {
+export const Moves = () => {
   return (
     <form className="min-h-screen">
       <GrainOverlay />
 
-      <div className="relative max-w-4xl mx-auto px-6 py-16">
+      <div className="relative max-w-4xl mx-auto px-6">
         {/* Main Moves */}
         <section className="mb-16">
           <div className="grid md:grid-cols-2 gap-x-12 gap-y-6">
@@ -452,8 +445,8 @@ const DungeonMotion = () => {
 
         {/* Monster Compendium */}
         <section className="mb-16">
-          <div className="border border-stone-300 dark:border-stone-700 p-8 relative">
-            <div className="absolute top-0 -translate-y-1/2 left-8 px-4 bg-stone-50 dark:bg-stone-900 border pb-1 pt-2.5 leading-none border-stone-300 dark:border-stone-700">
+          <div className="md:border border-stone-300 dark:border-stone-700 md:p-8 relative">
+            <div className="md:absolute md:top-0 md:-translate-y-1/2 md:left-8 md:px-4 md:bg-stone-50 md:dark:bg-stone-900 md:border md:pb-1 md:pt-2.5 md:leading-none md:border-stone-300 md:dark:border-stone-700 max-md:pt-4">
               <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 tracking-wide">
                 Monster Compendium
               </h2>
@@ -478,8 +471,8 @@ const DungeonMotion = () => {
                 <Divider />
 
                 <div className="space-y-4">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                    Traits{" "}
+                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
+                    Traits <br className="md:hidden" />
                     <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                       pick 2 per bane plus <Tag>terrifying</Tag> and{" "}
                       <Tag>unnatural</Tag>
@@ -517,8 +510,8 @@ const DungeonMotion = () => {
                 <Divider />
 
                 <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                    Armament{" "}
+                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
+                    Armament <br className="md:hidden" />
                     <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                       pick 2
                     </span>
@@ -576,8 +569,8 @@ const DungeonMotion = () => {
                 <Divider />
 
                 <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                    Instinct{" "}
+                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
+                    Instinct <br className="md:hidden" />
                     <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                       pick 1, fulfill it to revert to human form
                     </span>
@@ -599,8 +592,8 @@ const DungeonMotion = () => {
                 <Divider />
 
                 <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                    Bane{" "}
+                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
+                    Bane <br className="md:hidden" />
                     <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                       pick 1 or 2, Defy Danger to act against it
                     </span>
@@ -630,7 +623,7 @@ const DungeonMotion = () => {
 
               {/* Right Column - Monster Moves */}
               <div>
-                <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide mb-4">
+                <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap mb-4">
                   Monster Moves{" "}
                   <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                     pick 1
@@ -707,21 +700,26 @@ const DungeonMotion = () => {
 
         {/* Footer */}
         <footer className="mt-20 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex items-center justify-center gap-3 mb-20">
             <div className="w-12 h-px bg-stone-400 dark:bg-stone-600" />
             <div className="w-8 h-8 rounded-full border border-stone-400 dark:border-stone-600 flex items-center justify-center [corner-shape:superellipse(-.75)]" />
             <div className="w-12 h-px bg-stone-400 dark:bg-stone-600" />
           </div>
-          <p className="text-xs text-stone-400 dark:text-stone-500 mt-2">
-            Moves from Stonetop · Set in Avara
+          <p className="text-sm mb-6">
+            moves from{" "}
+            <a href="https://www.kickstarter.com/projects/1735046512/stonetop">
+              Stonetop
+            </a>
+            {" · "}set in{" "}
+            <a href="https://velvetyne.fr/fonts/avara/">Avara by Velvetyne</a>
+            {" · "}
+            website by Loudmouth Looter
           </p>
         </footer>
       </div>
     </form>
   );
 };
-
-export default DungeonMotion;
 
 function GrainOverlay() {
   return (

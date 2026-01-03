@@ -21,12 +21,12 @@ const variantStyles: Record<
   armament: {
     container: "space-y-2 text-sm text-stone-700 dark:text-stone-300",
     checkbox: "w-3 h-3 mt-0.75",
-    label: "flex gap-2 cursor-pointer",
+    label: "flex gap-2 flex-wrap cursor-pointer",
   },
   bane: {
     container: "space-y-2 text-sm text-stone-700 dark:text-stone-300",
     checkbox: "w-3 h-3 mt-0.5",
-    label: "flex gap-2 cursor-pointer",
+    label: "flex gap-2 flex-wrap cursor-pointer",
   },
   "monster-move": {
     container: "space-y-6",

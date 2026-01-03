@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const CheckboxStorage = () => {
+export const CheckboxStorage = () => {
   useEffect(() => {
     const form = document.querySelector("form");
     if (!form) return;
@@ -47,5 +47,3 @@ const CheckboxStorage = () => {
 
   return null;
 };
-
-export default CheckboxStorage;

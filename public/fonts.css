@@ -3,6 +3,7 @@
   src: url("/fonts/Avara-Bold.woff2") format("woff2");
   font-weight: 400 600;
   font-style: normal;
+  font-display: block;
 }
 
 @font-face {
@@ -10,6 +11,7 @@
   src: url("/fonts/Avara-BoldItalic.woff2") format("woff2");
   font-weight: 400 600;
   font-style: italic;
+  font-display: block;
 }
 
 @font-face {
@@ -17,4 +19,5 @@
   src: url("/fonts/Avara-Black.woff2") format("woff2");
   font-weight: 700 900;
   font-style: normal;
+  font-display: block;
 }

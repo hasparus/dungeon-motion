@@ -36,11 +36,38 @@ export const Moves = () => {
               </ul>
             </MoveCard>
 
+            <MoveCard id="nightmare" requirement="Pariah" title="Nightmare">
+              <p>
+                You can spend Fear to ask questions from the Seek Insight list.
+              </p>
+            </MoveCard>
+
             <MoveCard id="hardToKill" title="Hard to Kill">
               <p>
                 When you <Trigger>are at Death's Door</Trigger>, you can roll
                 +CON or +nothing (your choice). <strong>On a 7-9</strong>, you
                 can mark a debility of your choice to regain 1 HP.
+              </p>
+            </MoveCard>
+
+            <MoveCard
+              hasResource
+              id="unstoppable"
+              requirement="Hard to Kill"
+              resourceCount={5}
+              resourceName=""
+              title="Unstoppable"
+            >
+              <p>
+                When you <Trigger>are reduced to 0 HP in battle</Trigger>, you
+                can keep fighting. Each time you take damage while at 0 HP, mark
+                1. If something would heal you while you keep fighting, clear
+                one mark instead.
+              </p>
+              <p className="mt-2">
+                When you <Trigger>stop fighting</Trigger>, roll for Death's Door
+                with a -1 penalty for each circle marked. If you survive, clear
+                all your circles.
               </p>
             </MoveCard>
 
@@ -83,6 +110,27 @@ export const Moves = () => {
                 <Trigger>Persuade a beast</Trigger>, you can choose to roll
                 +WIS.
               </p>
+            </MoveCard>
+
+            <MoveCard
+              id="alpha"
+              requirement="Wild Speech"
+              title="Alpha"
+            >
+              <p>
+                When you{" "}
+                <Trigger>
+                  assert your dominance over a beast or spirit of the wild
+                </Trigger>
+                , roll +WIS: <strong>on a 7+</strong>, it must choose 1 from the
+                list below; <strong>on a 10+</strong>, you also gain advantage
+                on your next roll against it.
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>Fight you for dominance</li>
+                <li>Slink away or flee, then avoid you</li>
+                <li>Accept your authority, at least for now</li>
+              </ul>
             </MoveCard>
 
             <MoveCard id="mollify" title="Mollify">
@@ -152,6 +200,23 @@ export const Moves = () => {
                 , you may roll with +CHA instead of +WIS. If you are reduced to
                 zero HP in a dream, you fall into a deep slumber from which you
                 awaken after a day's rest.
+              </p>
+            </MoveCard>
+
+            <MoveCard
+              id="dreamDancer"
+              requirement="Sleepwalker"
+              title="Dream Dancer"
+            >
+              <p>
+                When you{" "}
+                <Trigger>
+                  enter a dream and craft and shape it to your will
+                </Trigger>{" "}
+                you roll +CHA: <strong>on a 10+</strong>, you can do anything
+                you imagine; <strong>on a 7-9</strong>, you do it but the dream
+                turns sour. Either allow the GM to make a hard move or awaken,
+                suddenly, in a cold sweat.
               </p>
             </MoveCard>
 

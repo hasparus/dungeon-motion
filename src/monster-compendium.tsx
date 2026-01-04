@@ -1,5 +1,5 @@
 import { CheckboxList } from "./checkbox-list";
-import { Compendium, CompendiumMove, CompendiumProps } from "./compendium";
+import { Compendium, CompendiumProps } from "./compendium";
 import { Divider } from "./divider";
 import { MoveCard } from "./move-card";
 import { Tag } from "./tag";
@@ -187,68 +187,68 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
               pick 1
             </span>
           </h4>
-
-          <CheckboxList
-            items={[
-              <CompendiumMove title="Craving">
-                When you indulge your instinct you may go without sustenance and
-                heal as if you had made camp. If you go without for a season,
-                mark a debility. If you cannot, grant control of your character
-                to the GM until your instinct is satisfied.
-              </CompendiumMove>,
-              <CompendiumMove title="Deadly">
-                When you deal damage with the intent to kill, increase all
-                damage dice by one size.
-              </CompendiumMove>,
-              <CompendiumMove title="Formless">
-                You can squeeze, flow, or ooze through surprisingly tight spaces
-                without issue. Also gain +1 Armor when you go unarmored thanks
-                to supernatural resilience.
-              </CompendiumMove>,
-              <CompendiumMove title="Implements of Evil">
-                Choose 2 additional monstrous armaments from the Monster
-                Compendium insert.
-              </CompendiumMove>,
-              <CompendiumMove title="Monster Squad" trailing="Reign ○○">
-                You hold domain over creatures of the night. When{" "}
-                <Trigger>
-                  you call forth nocturnal scavengers or a pestilent swarm
-                </Trigger>{" "}
-                roll +CHA: <strong>on a 7+</strong>, they appear and sew chaos
-                on your behalf but hold 1 Reign; <strong>on a 10+</strong>, hold
-                2 Reign; <strong>on a 6-</strong>, they sew chaos on your behalf
-                but hold no Reign and mark XP. Spend Reign to: Shield something
-                or someone from the chaos, or Provide aid to yourself or an
-                ally.
-              </CompendiumMove>,
-              <CompendiumMove title="Nightbreed">
-                You can smell and track blood from miles away and when you taste
-                blood and <Trigger>Seek Insight</Trigger> you may roll +CON. If
-                you do you can always ask "What is the extent of their
-                injuries?" for free, even on a 6-.
-              </CompendiumMove>,
-              <CompendiumMove title="Night Crawler">
-                When you{" "}
-                <Trigger>
-                  climb, cling to, or skitter across a sheer surface
-                </Trigger>{" "}
-                you cannot fall and you make any rolls to hide, hunt prey, or
-                traverse terrain with advantage.
-              </CompendiumMove>,
-              <CompendiumMove title="Release the Beast">
-                You are capable of exceptional strength.{" "}
-                <Trigger>
-                  When you lift, throw, or break something in a display of
-                  frightening power
-                </Trigger>{" "}
-                your attacks gain the <Tag>forceful</Tag> and <Tag>area</Tag>{" "}
-                tags and you Let Fly with +STR but the GM will choose one: What
-                you've done cannot be undone, or You risk collateral damage in
-                addition to other consequences.
-              </CompendiumMove>,
-            ]}
-            variant="compendium-move"
-          />
+          <div className="flex flex-col gap-2">
+            <MoveCard size="sm" title="Craving">
+              When you indulge your instinct you may go without sustenance and
+              heal as if you had made camp. If you go without for a season, mark
+              a debility. If you cannot, grant control of your character to the
+              GM until your instinct is satisfied.
+            </MoveCard>
+            <MoveCard size="sm" title="Deadly">
+              When you deal damage with the intent to kill, increase all damage
+              dice by one size.
+            </MoveCard>
+            <MoveCard size="sm" title="Formless">
+              You can squeeze, flow, or ooze through surprisingly tight spaces
+              without issue. Also gain +1 Armor when you go unarmored thanks to
+              supernatural resilience.
+            </MoveCard>
+            <MoveCard size="sm" title="Implements of Evil">
+              Choose 2 additional monstrous armaments from the Monster
+              Compendium insert.
+            </MoveCard>
+            <MoveCard
+              resourceName="Reign"
+              resources={2}
+              size="sm"
+              title="Monster Squad"
+            >
+              You hold domain over creatures of the night. When{" "}
+              <Trigger>
+                you call forth nocturnal scavengers or a pestilent swarm
+              </Trigger>{" "}
+              roll +CHA: <strong>on a 7+</strong>, they appear and sew chaos on
+              your behalf but hold 1 Reign; <strong>on a 10+</strong>, hold 2
+              Reign; <strong>on a 6-</strong>, they sew chaos on your behalf but
+              hold no Reign and mark XP. Spend Reign to: Shield something or
+              someone from the chaos, or Provide aid to yourself or an ally.
+            </MoveCard>
+            <MoveCard size="sm" title="Nightbreed">
+              You can smell and track blood from miles away and when you taste
+              blood and <Trigger>Seek Insight</Trigger> you may roll +CON. If
+              you do you can always ask "What is the extent of their injuries?"
+              for free, even on a 6-.
+            </MoveCard>
+            <MoveCard size="sm" title="Night Crawler">
+              When you{" "}
+              <Trigger>
+                climb, cling to, or skitter across a sheer surface
+              </Trigger>{" "}
+              you cannot fall and you make any rolls to hide, hunt prey, or
+              traverse terrain with advantage.
+            </MoveCard>
+            <MoveCard size="sm" title="Release the Beast">
+              You are capable of exceptional strength.{" "}
+              <Trigger>
+                When you lift, throw, or break something in a display of
+                frightening power
+              </Trigger>{" "}
+              your attacks gain the <Tag>forceful</Tag> and <Tag>area</Tag> tags
+              and you Let Fly with +STR but the GM will choose one: What you've
+              done cannot be undone, or You risk collateral damage in addition
+              to other consequences.
+            </MoveCard>
+          </div>
         </div>
       </div>
     </Compendium>

@@ -1,5 +1,6 @@
 import { CheckboxList } from "./checkbox-list";
-import { Compendium, CompendiumMove, CompendiumProps } from "./compendium";
+import { Compendium, CompendiumProps } from "./compendium";
+import { MoveCard } from "./move-card";
 import { Tag } from "./tag";
 import { Trigger } from "./trigger";
 
@@ -10,12 +11,13 @@ export function WielderCompendium(props: Omit<CompendiumProps, "title">) {
         <div>
           <div className="space-y-3">
             <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-              Your Weapon <br className="md:hidden" />
+              Your Weapon{" "}
               <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                 pick one
               </span>
             </h4>
             <CheckboxList
+              className="space-y-4!"
               items={[
                 <>
                   <strong>Crom Faeyr,</strong> hammer of the dwarf-kings{" "}
@@ -90,11 +92,11 @@ export function WielderCompendium(props: Omit<CompendiumProps, "title">) {
 
           <CheckboxList
             items={[
-              <CompendiumMove title="Snicker-Snack!">
+              <MoveCard size="sm" title="Snicker-Snack!">
                 When you <Trigger>wield Your Weapon and fight to kill</Trigger>,
                 you deal damage with advantage.
-              </CompendiumMove>,
-              <CompendiumMove title="Voices">
+              </MoveCard>,
+              <MoveCard size="sm" title="Voices">
                 When you{" "}
                 <Trigger>consult the spirits bound to Your Weapon</Trigger>,
                 roll +CHA: <strong>on a 10+</strong>, they give you a clear,
@@ -111,8 +113,13 @@ export function WielderCompendium(props: Omit<CompendiumProps, "title">) {
                     of you
                   </li>
                 </ul>
-              </CompendiumMove>,
-              <CompendiumMove title="Well of Power" trailing="penalty ○○○○">
+              </MoveCard>,
+              <MoveCard
+                resourceName="Penalty"
+                resources={4}
+                size="sm"
+                title="Well of Power"
+              >
                 Pick a spell from the Wizard or Cleric playbook:
                 <p className="mt-3">
                   When you <Trigger>use Your Weapon to cast this spell</Trigger>
@@ -126,7 +133,7 @@ export function WielderCompendium(props: Omit<CompendiumProps, "title">) {
                     until you Make Camp
                   </li>
                 </ul>
-              </CompendiumMove>,
+              </MoveCard>,
             ]}
             variant="compendium-move"
           />

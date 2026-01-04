@@ -1,5 +1,7 @@
 import React from "react";
 
+import { cn } from "./cn";
+
 type Variant = "compendium-move" | "instinct" | "small" | "small" | "traits";
 
 const variantStyles: Record<
@@ -31,15 +33,16 @@ const variantStyles: Record<
 };
 
 interface CheckboxListProps {
+  className?: string;
   items: React.ReactNode[];
   variant: Variant;
 }
 
-export function CheckboxList({ items, variant }: CheckboxListProps) {
+export function CheckboxList({ className, items, variant }: CheckboxListProps) {
   const styles = variantStyles[variant];
 
   return (
-    <div className={styles.container}>
+    <div className={cn(styles.container, className)}>
       {items.map((item, i) => (
         <label className={styles.label} key={i}>
           <input className={styles.checkbox} type="checkbox" />

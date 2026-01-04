@@ -1,34 +1,5 @@
 import { cn } from "./cn";
 
-export interface CompendiumMoveProps {
-  children: React.ReactNode;
-  title: string;
-  trailing?: string;
-}
-
-// TODO: Remove this and use just a MoveCard variant="small"
-export const CompendiumMove = ({
-  children,
-  title,
-  trailing,
-}: CompendiumMoveProps) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-        {title}
-      </h5>
-      {trailing && (
-        <span className="text-xs text-stone-500 dark:text-stone-400 ml-auto">
-          {trailing}
-        </span>
-      )}
-    </div>
-    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-      {children}
-    </p>
-  </div>
-);
-
 export interface CompendiumProps extends React.HTMLAttributes<HTMLElement> {
   title: string;
 }

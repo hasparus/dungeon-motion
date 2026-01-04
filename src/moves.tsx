@@ -304,7 +304,7 @@ export const Moves = () => {
         {/* Monster Compendium */}
         <MonsterCompendium className="mb-16" />
 
-        <SectionDivider className="" />
+        <SectionDivider className="print:hidden mb-16" />
 
         <WielderCompendium className="mb-16" />
 

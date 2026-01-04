@@ -367,6 +367,15 @@ export const Moves = () => {
               deal +1d4 damage on the initial exchange. Anyone who follows your
               lead also gets this benefit.
             </MoveCard>
+
+            <MoveCard id="armored" title="Armored">
+              When you <Trigger>wear armor</Trigger>, ignore the{" "}
+              <Tag>clumsy</Tag> tag.
+            </MoveCard>
+
+            <MoveCard id="walkThroughTheValley" title="Walk Through the Valley">
+              You are unaffected by poison or disease.
+            </MoveCard>
           </Columns>
         </section>
 

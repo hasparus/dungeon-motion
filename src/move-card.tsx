@@ -66,12 +66,14 @@ export const MoveCard = ({
               </span>
               <div className="flex gap-0.5 ml-1">
                 {Array.from({ length: resources }).map((_, i) => (
-                  <div
-                    className={cn(
-                      "rounded-full border border-stone-400 dark:border-stone-600",
-                      isSmall ? "size-3" : "size-4"
-                    )}
+                  <input
+                    className={
+                      isSmall ? "size-3 rounded-full" : "size-4 rounded-full"
+                    }
+                    data-checkbox-marker="x"
                     key={i}
+                    name={`${id}-r-${i}`}
+                    type="checkbox"
                   />
                 ))}
               </div>
@@ -84,7 +86,7 @@ export const MoveCard = ({
                   <input
                     className="size-3.5 aspect-square shrink-0"
                     key={i}
-                    name={`${id}-${i}`}
+                    name={`${id}-c-${i}`}
                     type="checkbox"
                   />
                 ))}

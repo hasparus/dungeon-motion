@@ -58,6 +58,18 @@ input[type="checkbox"]:checked::before {
   transform: scale(1);
 }
 
+input[type="checkbox"][data-checkbox-marker="x"]:checked::before {
+  content: "✗";
+  font-size: 1.2em;
+  font-weight: bold;
+  color: currentColor;
+  text-align: center;
+  line-height: 1;
+  box-shadow: none;
+  clip-path: none;
+  transform: translate(-0.03em, -0.07em);
+}
+
 input[type="checkbox"]:focus {
   outline: max(2px, 0.15em) solid currentColor;
   outline-offset: max(2px, 0.15em);

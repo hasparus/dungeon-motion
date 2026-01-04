@@ -22,7 +22,7 @@ const variantStyles: Record<
   small: {
     checkbox: "size-3.25 mt-0.5 aspect-square shrink-0",
     container: "space-y-2 text-sm text-stone-700 dark:text-stone-300",
-    label: "flex gap-2 flex-wrap cursor-pointer",
+    label: "flex gap-x-2 flex-wrap cursor-pointer",
   },
   traits: {
     checkbox: "size-3 aspect-square shrink-0 -mt-0.5",

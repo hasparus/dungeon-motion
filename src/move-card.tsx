@@ -35,12 +35,12 @@ export const MoveCard = ({
       }`}
     >
       <div className="flex-1">
-        <div className={cn("flex items-center", isSmall ? "gap-2" : "gap-3")}>
+        <div className={cn("flex items-center", isSmall ? "gap-2" : "gap-2.5")}>
           <input
             aria-describedby={`${id}-title`}
             className={cn(
               "shrink-0 aspect-square",
-              isSmall ? "-mt-0.75 size-4" : "-mt-0.75 size-4.5"
+              isSmall ? "mt-[-3.5px] size-4" : "-mt-0.75 size-4.5"
             )}
             id={id}
             name={id}
@@ -99,8 +99,8 @@ export const MoveCard = ({
         )}
         <div
           className={cn(
-            "mt-2 text-stone-700 dark:text-stone-300 leading-relaxed",
-            isSmall ? "text-sm" : ""
+            "text-stone-700 dark:text-stone-300 leading-relaxed",
+            isSmall ? "text-sm mt-1" : "mt-2"
           )}
         >
           {children}

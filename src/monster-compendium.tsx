@@ -187,7 +187,7 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
               pick 1
             </span>
           </h4>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             <MoveCard size="sm" title="Craving">
               When you indulge your instinct you may go without sustenance and
               heal as if you had made camp. If you go without for a season, mark

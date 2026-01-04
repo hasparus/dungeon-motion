@@ -270,6 +270,103 @@ export const Moves = () => {
                 even more so.
               </p>
             </MoveCard>
+
+            <MoveCard id="situationalAwareness" title="Situational Awareness">
+              <p>
+                When you <Trigger>Discern Realities</Trigger>, add these to the
+                list of questions you can ask:
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>What is my enemy's true position?</li>
+                <li>Who or what here is the biggest threat?</li>
+                <li>What's the best way in/out/through/past?</li>
+              </ul>
+              <p className="mt-3">
+                When <Trigger>a fight starts</Trigger>, ask the GM one question
+                that you could ask with Discern Realities, and gain advantage to
+                act on the answer.
+              </p>
+            </MoveCard>
+
+            <MoveCard id="pantherishGrace" title="Pantherish Grace">
+              When you are <Trigger>unarmored and unencumbered</Trigger>, you
+              impose disadvantage on any damage you take that you could dodge or
+              roll with.
+            </MoveCard>
+
+            <MoveCard id="backstab" title="Backstab">
+              <p>
+                When you{" "}
+                <Trigger>
+                  attack someone up close and they don't see it coming
+                </Trigger>
+                , Deal Damage or roll +DEX: <strong>on a 10+</strong>, Deal
+                Damage and pick 2; <strong>on a 7-9</strong>, Deal Damage and
+                pick 1.
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>Deal +1d4 damage</li>
+                <li>Strike a weak spot, ignoring their armor</li>
+                <li>They can't make noise or raise an alarm</li>
+                <li>You slip away before they can react</li>
+                <li>
+                  You create an opportunity; you or an ally gain advantage if
+                  you act on it
+                </li>
+              </ul>
+            </MoveCard>
+
+            <MoveCard id="dangerSense" title="Danger Sense">
+              <p>
+                You can always ask the GM, "Is there an ambush or trap here?" If
+                they say "yes," roll +INT: <strong>on a 10+</strong>, ask the GM
+                both questions; <strong>on a 7-9</strong>, ask 1:
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>What will trigger the trap or ambush?</li>
+                <li>What will happen once it's triggered?</li>
+              </ul>
+              <p className="mt-3">
+                <strong>On a 6-</strong>, don't mark XP, but nothing bad happens
+                just yet.
+              </p>
+            </MoveCard>
+
+            <MoveCard id="bendBarsLiftGates" title="Bend Bars, Lift Gates">
+              <p>
+                When you{" "}
+                <Trigger>
+                  use brute strength to overcome an inanimate obstacle
+                </Trigger>
+                , roll +STR: <strong>on a 7+</strong>, OH YEAH! but choose 1 (on
+                a 10+) or choose 2 (on a 7-9).
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>It takes a while</li>
+                <li>You cause unwanted damage or harm</li>
+                <li>You make a lot of noise</li>
+                <li>Mark a debility</li>
+              </ul>
+            </MoveCard>
+
+            <MoveCard id="staunchDefender" title="Staunch Defender">
+              When you <Trigger>Defend</Trigger>, you hold +1 Readiness. Even on
+              a 6-, you hold 1 Readiness.
+            </MoveCard>
+
+            <MoveCard id="tricksOfTheTrade" title="Tricks of the Trade">
+              When you{" "}
+              <Trigger>pick locks or pockets or disable traps</Trigger>, roll
+              +DEX: <strong>on a 10+</strong>, you do it, no problem;{" "}
+              <strong>on a 7-9</strong>, you still do it, but the GM will offer
+              you two options between suspicion, danger, or cost.
+            </MoveCard>
+
+            <MoveCard id="charge" title="Charge!">
+              When you <Trigger>charge into battle</Trigger>, gain +1 armor and
+              deal +1d4 damage on the initial exchange. Anyone who follows your
+              lead also gets this benefit.
+            </MoveCard>
           </Columns>
         </section>
 

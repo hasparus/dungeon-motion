@@ -111,8 +111,10 @@ input[type="checkbox"]:disabled {
 em {
   font-style: normal;
   color: var(--color-stone-900);
-  text-decoration: underline dashed var(--color-stone-400);
+  text-decoration: underline dashed
+    color-mix(in srgb, var(--color-stone-900) 25%, transparent);
   letter-spacing: -0.01em;
+  text-underline-offset: 2px;
 }
 
 strong {

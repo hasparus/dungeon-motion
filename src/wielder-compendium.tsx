@@ -90,53 +90,50 @@ export function WielderCompendium(props: Omit<CompendiumProps, "title">) {
             Wielder Moves
           </h4>
 
-          <CheckboxList
-            items={[
-              <MoveCard size="sm" title="Snicker-Snack!">
-                When you <Trigger>wield Your Weapon and fight to kill</Trigger>,
-                you deal damage with advantage.
-              </MoveCard>,
-              <MoveCard size="sm" title="Voices">
-                When you{" "}
-                <Trigger>consult the spirits bound to Your Weapon</Trigger>,
-                roll +CHA: <strong>on a 10+</strong>, they give you a clear,
-                useful insight into your situation but might ask some questions
-                in return; <strong>on a 7-9</strong>, they'll give you insight
-                into your situation, but pick 1:
-                <ul className="mt-3 space-y-1 pl-4">
-                  <li className="flex items-start gap-2">
-                    <span className="text-stone-400">•</span> The insight is
-                    vague, cryptic, or incomplete
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-stone-400">•</span> They make a demand
-                    of you
-                  </li>
-                </ul>
-              </MoveCard>,
-              <MoveCard
-                resourceName="Penalty"
-                resources={4}
-                size="sm"
-                title="Well of Power"
-              >
-                Pick a spell from the Wizard or Cleric playbook:
-                <p className="mt-3">
-                  When you <Trigger>use Your Weapon to cast this spell</Trigger>
-                  , roll +CHA: <strong>on a 10+</strong>, the spell works;{" "}
-                  <strong>on a 7-9</strong>, it works but pick 1:
-                </p>
-                <ul className="diamond mt-3 space-y-1 text-sm">
-                  <li>You endanger yourself, an ally, or an innocent</li>
-                  <li>
-                    You take a -1 ongoing penalty (cumulative) to use this move
-                    until you Make Camp
-                  </li>
-                </ul>
-              </MoveCard>,
-            ]}
-            variant="compendium-move"
-          />
+          <div className="flex flex-col gap-3">
+            <MoveCard size="sm" title="Snicker-Snack!">
+              When you <Trigger>wield Your Weapon and fight to kill</Trigger>,
+              you deal damage with advantage.
+            </MoveCard>
+            <MoveCard size="sm" title="Voices">
+              When you{" "}
+              <Trigger>consult the spirits bound to Your Weapon</Trigger>, roll
+              +CHA: <strong>on a 10+</strong>, they give you a clear, useful
+              insight into your situation but might ask some questions in
+              return; <strong>on a 7-9</strong>, they'll give you insight into
+              your situation, but pick 1:
+              <ul className="mt-3 space-y-1 pl-4">
+                <li className="flex items-start gap-2">
+                  <span className="text-stone-400">•</span> The insight is
+                  vague, cryptic, or incomplete
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-stone-400">•</span> They make a demand
+                  of you
+                </li>
+              </ul>
+            </MoveCard>
+            <MoveCard
+              resourceName="Penalty"
+              resources={4}
+              size="sm"
+              title="Well of Power"
+            >
+              Pick a spell from the Wizard or Cleric playbook:
+              <p className="mt-3">
+                When you <Trigger>use Your Weapon to cast this spell</Trigger>,
+                roll +CHA: <strong>on a 10+</strong>, the spell works;{" "}
+                <strong>on a 7-9</strong>, it works but pick 1:
+              </p>
+              <ul className="diamond mt-3 space-y-1 text-sm">
+                <li>You endanger yourself, an ally, or an innocent</li>
+                <li>
+                  You take a -1 ongoing penalty (cumulative) to use this move
+                  until you Make Camp
+                </li>
+              </ul>
+            </MoveCard>
+          </div>
         </div>
       </div>
     </Compendium>

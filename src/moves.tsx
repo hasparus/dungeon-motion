@@ -209,6 +209,22 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
+            <MoveCard id="mindLikeSieve" title="The Mind is Like a Sieve">
+              <p>
+                When you{" "}
+                <Trigger>
+                  interact with an NPC and wish to slip from their memory
+                  immediately
+                </Trigger>
+                , roll +CHA: <strong>on a 10+</strong>, they forget you instantly
+                and remember instead something plausible of your choosing;{" "}
+                <strong>on a 7-9</strong>, they forget you instantly, but are
+                shaken or upset by the experience; <strong>on a 6-</strong>, they
+                remember you, for now, and some detail about you will stick with
+                them indefinitely.
+              </p>
+            </MoveCard>
+
             <MoveCard id="turnTheSoil" resources={1} title="Turn the Soil">
               <p>
                 Once per expedition when you{" "}

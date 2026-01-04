@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 
 import { cn } from "./cn";
 
@@ -20,9 +20,10 @@ const variantStyles: Record<
     label: "flex items-center gap-2 cursor-pointer",
   },
   small: {
-    checkbox: "size-3.25 mt-0.5 aspect-square shrink-0",
+    checkbox:
+      "size-3.25 aspect-square shrink-0 inline mr-1.5 translate-y-[-.5px]",
     container: "space-y-2 text-sm text-stone-700 dark:text-stone-300",
-    label: "flex gap-x-2 flex-wrap cursor-pointer",
+    label: "cursor-pointer block",
   },
   traits: {
     checkbox: "size-3 aspect-square shrink-0 -mt-0.5",
@@ -40,12 +41,17 @@ interface CheckboxListProps {
 
 export function CheckboxList({ className, items, variant }: CheckboxListProps) {
   const styles = variantStyles[variant];
+  const id = useId();
 
   return (
     <div className={cn(styles.container, className)}>
       {items.map((item, i) => (
         <label className={styles.label} key={i}>
-          <input className={styles.checkbox} type="checkbox" />
+          <input
+            className={styles.checkbox}
+            name={`${id}-${i}`}
+            type="checkbox"
+          />
           {item}
         </label>
       ))}

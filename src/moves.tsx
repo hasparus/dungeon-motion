@@ -1,3 +1,4 @@
+import { CheckboxList } from "./checkbox-list";
 import { Columns } from "./columns";
 import { MonsterCompendium } from "./monster-compendium";
 import { MoveCard } from "./move-card";
@@ -368,6 +369,58 @@ export const Moves = () => {
             <MoveCard id="staunchDefender" title="Staunch Defender">
               When you <Trigger>Defend</Trigger>, you hold +1 Readiness. Even on
               a 6-, you hold 1 Readiness.
+            </MoveCard>
+
+            <MoveCard id="weaponSpecializations" title="Weapon Specializations">
+              <p className="mb-3">Pick two.</p>
+              <CheckboxList
+                variant="small"
+                items={[
+                  <>
+                    When you <Trigger>Defend with a sword</Trigger> and spend
+                    Readiness to strike back at an attacker, Deal Damage
+                    normally (without disadvantage)
+                  </>,
+                  <>
+                    When you <Trigger>Deal Damage with a mace</Trigger>, deal +1
+                    extra damage (+2 total) and it's <Tag>forceful</Tag> (knocks
+                    foes around)
+                  </>,
+                  <>
+                    When you <Trigger>Hack & Slash with a flail</Trigger>, on a
+                    12+, your foe is also knocked off their feet <em>or</em>{" "}
+                    disarmed (GM's choice)
+                  </>,
+                  <>
+                    When you <Trigger>Deal Damage with an ax</Trigger>, deal +1
+                    extra damage (+2 total) and it's <Tag>messy</Tag> (bloody &
+                    destructive)
+                  </>,
+                  <>
+                    When you <Trigger>Hack & Slash with a hammer</Trigger>, on a
+                    12+, your foe is also staggered and dazed <em>or</em> their
+                    armor is reduced by 1 (GM's choice)
+                  </>,
+                  <>
+                    When you <Trigger>Deal Damage with a spear</Trigger>, you
+                    have 2 piercing (ignore 2 armor)
+                  </>,
+                  <>
+                    When you <Trigger>Hack & Slash with a polearm</Trigger>, on
+                    a 12+, instead of making a choice, you deal an extra 1d6
+                    damage <em>and</em> avoid/prevent/counter the enemy's attack
+                  </>,
+                  <>
+                    When you{" "}
+                    <Trigger>
+                      Deal Damage with a dagger or knife while grappling your
+                      foe
+                    </Trigger>
+                    , you ignore their armor unless they are <Tag>amorphous</Tag>{" "}
+                    (ask the GM)
+                  </>,
+                ]}
+              />
             </MoveCard>
 
             <MoveCard id="tricksOfTheTrade" title="Tricks of the Trade">

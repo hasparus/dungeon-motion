@@ -36,7 +36,7 @@ input[type="checkbox"] {
   font: inherit;
   color: currentColor;
   border: 0.15em solid currentColor;
-  display: grid;
+  display: inline-grid;
   place-content: center;
   transform: translateY(-0.05em);
   cursor: pointer;

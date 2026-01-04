@@ -11,9 +11,9 @@ export const DescribbedByAsLabel = () => {
 
     const handlers = new WeakMap<HTMLInputElement, () => void>();
 
-    inputs.forEach((input) => {
+    for (const input of inputs) {
       const describedBy = input.getAttribute("aria-describedby");
-      if (!describedBy) return;
+      if (!describedBy) continue;
       const describedElement = document.getElementById(describedBy);
       if (describedElement) {
         const handleClick = () => input.click();
@@ -21,15 +21,15 @@ export const DescribbedByAsLabel = () => {
         describedElement.style.cursor = "pointer";
         handlers.set(input, handleClick);
       }
-    });
+    }
 
     return () => {
-      inputs.forEach((input) => {
+      for (const input of inputs) {
         const handleClick = handlers.get(input);
         if (handleClick) {
           input.removeEventListener("click", handleClick);
         }
-      });
+      }
     };
   }, []);
 

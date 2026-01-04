@@ -1,127 +1,8 @@
-import React from "react";
-import { CheckboxList } from "./CheckboxList";
-import { cn } from "./cn";
-import { SectionDivider } from "./SectionDivider";
-
-type MoveId = string;
-
-interface MoveCardProps {
-  id: MoveId;
-  title: string;
-  children: React.ReactNode;
-  requirement?: string;
-  hasResource?: boolean;
-  resourceName?: string;
-  resourceCount?: number;
-  className?: string;
-}
-
-const Trigger = ({ children }: { children: React.ReactNode }) => (
-  <em className="text-stone-900 dark:text-stone-100 font-medium">{children}</em>
-);
-
-const Tag = ({
-  children,
-  handwritten = false,
-}: {
-  children: React.ReactNode;
-  handwritten?: boolean;
-}) => (
-  <span
-    className={cn(
-      "text-stone-900 dark:text-stone-100",
-      handwritten
-        ? "font-hand text-lg leading-none [text-box-trim:trim-end] -translate-y-px text-stone-700 dark:text-stone-300 [text-box-edge:cap_alphabetic]"
-        : "italic"
-    )}
-  >
-    {children}
-  </span>
-);
-
-const Divider = () => (
-  <div className="border-t border-stone-300 dark:border-stone-600 my-8" />
-);
-
-const MonsterMove = ({
-  title,
-  trailing,
-  children,
-}: {
-  title: string;
-  trailing?: string;
-  children: React.ReactNode;
-}) => (
-  <div className="space-y-2">
-    <div className="flex items-center gap-2">
-      <h5 className="font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-        {title}
-      </h5>
-      {trailing && (
-        <span className="text-xs text-stone-500 dark:text-stone-400 ml-auto">
-          {trailing}
-        </span>
-      )}
-    </div>
-    <p className="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-      {children}
-    </p>
-  </div>
-);
-
-const MoveCard = ({
-  id,
-  title,
-  children,
-  requirement,
-  hasResource = false,
-  resourceName = "",
-  resourceCount = 0,
-  className = "",
-}: MoveCardProps) => (
-  <article className={`group break-inside-avoid ${className} py-4`}>
-    <div className="flex items-start gap-3">
-      <input
-        type="checkbox"
-        id={id}
-        value={id}
-        aria-describedby={`${id}-title`}
-        className="w-5 h-5 mt-0.5"
-      />
-      <div className="flex-1">
-        <div className="flex items-baseline justify-between gap-4 flex-wrap">
-          <h3
-            className="text-xl tracking-wide font-bold text-stone-800 dark:text-stone-100"
-            id={`${id}-title`}
-          >
-            {title}
-          </h3>
-          {hasResource && (
-            <div className="flex items-center gap-1 text-stone-500 dark:text-stone-400 text-sm">
-              <span className="tracking-wider">{resourceName}</span>
-              <div className="flex gap-0.5 ml-1">
-                {[...Array(resourceCount)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-3 h-3 rounded-full border border-stone-400 dark:border-stone-600"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        {requirement && (
-          <p className="text-sm text-stone-500 dark:text-stone-400 mt-0.5">
-            (Requires {requirement})
-          </p>
-        )}
-        <div className="mt-2 text-stone-700 dark:text-stone-300 leading-relaxed">
-          {children}
-        </div>
-      </div>
-    </div>
-  </article>
-);
+import { MonsterCompendium } from "./monster-compendium";
+import { MoveCard } from "./move-card";
+import { SectionDivider } from "./section-divider";
+import { Tag } from "./tag";
+import { Trigger } from "./trigger";
 
 export const Moves = () => {
   return (
@@ -129,15 +10,14 @@ export const Moves = () => {
       <GrainOverlay />
 
       <div className="relative max-w-4xl mx-auto px-6">
-        {/* Main Moves */}
         <section className="mb-16">
           <div className="md:columns-2 md:gap-x-12">
             <MoveCard
-              id="pariah"
-              title="Pariah"
               hasResource
-              resourceName="Fear"
+              id="pariah"
               resourceCount={4}
+              resourceName="Fear"
+              title="Pariah"
             >
               <p>
                 When you{" "}
@@ -221,14 +101,14 @@ export const Moves = () => {
             </MoveCard>
 
             <MoveCard
+              className="md:[column-span:all]"
               id="otherkin"
               title="Otherkin"
-              className="md:[column-span:all]"
             >
               <p className="flex items-center gap-2 mb-2">
-                <input type="checkbox" className="w-3 h-3" />
-                <input type="checkbox" className="w-3 h-3" />
-                <input type="checkbox" className="w-3 h-3" />
+                <input className="w-3 h-3" type="checkbox" />
+                <input className="w-3 h-3" type="checkbox" />
+                <input className="w-3 h-3" type="checkbox" />
               </p>
               <p>
                 Your human form is but a guise. Fill out the Stranger's Monster
@@ -239,11 +119,11 @@ export const Moves = () => {
             </MoveCard>
 
             <MoveCard
-              id="ravensVoice"
-              title="Raven's Voice"
               hasResource
-              resourceName="Memory"
+              id="ravensVoice"
               resourceCount={1}
+              resourceName="Memory"
+              title="Raven's Voice"
             >
               <p>
                 When you{" "}
@@ -288,11 +168,11 @@ export const Moves = () => {
             </MoveCard>
 
             <MoveCard
-              id="turnTheSoil"
-              title="Turn the Soil"
               hasResource
-              resourceName=""
+              id="turnTheSoil"
               resourceCount={1}
+              resourceName=""
+              title="Turn the Soil"
             >
               <p>
                 Once per expedition when you{" "}
@@ -342,19 +222,19 @@ export const Moves = () => {
               </ul>
             </MoveCard>
 
-            <MoveCard id="nightmare" title="Nightmare" requirement="Pariah">
+            <MoveCard id="nightmare" requirement="Pariah" title="Nightmare">
               <p>
                 You can spend Fear to ask questions from the Seek Insight list.
               </p>
             </MoveCard>
 
             <MoveCard
-              id="unstoppable"
-              title="Unstoppable"
-              requirement="Hard to Kill"
               hasResource
-              resourceName=""
+              id="unstoppable"
+              requirement="Hard to Kill"
               resourceCount={5}
+              resourceName=""
+              title="Unstoppable"
             >
               <p>
                 When you <Trigger>are reduced to 0 HP in battle</Trigger>, you
@@ -371,8 +251,8 @@ export const Moves = () => {
 
             <MoveCard
               id="musclebound"
-              title="Musclebound"
               requirement="Strength +2 or higher"
+              title="Musclebound"
             >
               <p>
                 When you <Trigger>make a hand-to-hand or thrown attack</Trigger>
@@ -382,7 +262,7 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
-            <MoveCard id="alpha" title="Alpha" requirement="Wild Speech">
+            <MoveCard id="alpha" requirement="Wild Speech" title="Alpha">
               <p>
                 When you{" "}
                 <Trigger>
@@ -415,8 +295,8 @@ export const Moves = () => {
           <div className="md:columns-2 md:gap-x-12 gap-6">
             <MoveCard
               id="acceptance"
-              title="Acceptance"
               requirement="level 6+ and Otherkin"
+              title="Acceptance"
             >
               <p>
                 You've come to terms with your monstrous nature. You no longer
@@ -428,8 +308,8 @@ export const Moves = () => {
 
             <MoveCard
               id="dreamDancer"
-              title="Dream Dancer"
               requirement="level 6+ and Sleepwalker"
+              title="Dream Dancer"
             >
               <p>
                 When you{" "}
@@ -448,263 +328,7 @@ export const Moves = () => {
         <SectionDivider />
 
         {/* Monster Compendium */}
-        <section className="mb-16">
-          <div className="md:border border-stone-300 dark:border-stone-700 md:p-8 relative">
-            <div className="md:absolute md:top-0 md:-translate-y-1/2 md:left-8 md:px-4 md:bg-stone-50 md:dark:bg-stone-900 md:border md:pb-1 md:pt-2.5 md:leading-none md:border-stone-300 md:dark:border-stone-700 max-md:pt-4">
-              <h2 className="text-2xl font-bold text-stone-800 dark:text-stone-100 tracking-wide">
-                Monster Compendium
-              </h2>
-            </div>
-
-            <div className="mt-4 grid md:grid-cols-2 gap-8">
-              {/* Left Column */}
-              <div>
-                <MoveCard
-                  id="metamorphosis"
-                  title="Metamorphosis"
-                  className="pt-0 pb-0"
-                >
-                  <p>
-                    There's a monster inside you. When you{" "}
-                    <Trigger>reveal the monster within</Trigger> roll +CON:{" "}
-                    <strong>on a 7+</strong>, take on its traits, armament,
-                    moves, instinct, bane, etc; <strong>on a 10+</strong>, you
-                    needn't indulge your instinct or Defy Danger to revert back;{" "}
-                    <strong>on a 6-</strong>, as a 7+ but you lose yourself to
-                    your instinct. Mark XP and the GM will indulge it for you
-                    soon.
-                  </p>
-                </MoveCard>
-
-                <Divider />
-
-                <div className="space-y-4">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-                    Traits <br className="md:hidden" />
-                    <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
-                      pick 2 per bane plus <Tag>terrifying</Tag> and{" "}
-                      <Tag>unnatural</Tag>
-                    </span>
-                  </h4>
-                  <CheckboxList
-                    variant="traits"
-                    items={[
-                      "agile",
-                      "amorphous",
-                      "amphibious",
-                      "ancient",
-                      "ethereal",
-                      "fast",
-                      "gluttonous",
-                      "intelligent",
-                      "large",
-                      "magic",
-                      "powerful",
-                      "resilient",
-                      "sharp-eared",
-                      "sharp-eyed",
-                      "sharp-nosed",
-                      "small",
-                      "squamous",
-                      "stealthy",
-                      "terrifying",
-                      "tireless",
-                      "unnatural",
-                      "wild",
-                    ]}
-                  />
-                </div>
-
-                <Divider />
-
-                <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-                    Armament <br className="md:hidden" />
-                    <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
-                      pick 2
-                    </span>
-                  </h4>
-                  <CheckboxList
-                    variant="armament"
-                    items={[
-                      <>
-                        <strong>Draining Touch:</strong> d6+2{" "}
-                        <Tag handwritten>hand, magic, ignores armor</Tag>
-                      </>,
-                      <>
-                        <strong>Cloven Hooves:</strong> d8+3{" "}
-                        <Tag handwritten>forceful, close</Tag>
-                      </>,
-                      <>
-                        <strong>Chitinous Shell or Thick Hide:</strong> Armor 2
-                      </>,
-                      <>
-                        <strong>Sharpened Horns:</strong> d8+3{" "}
-                        <Tag handwritten>close, 2 piercing</Tag>
-                      </>,
-                      <>
-                        <strong>Lashing Tongue:</strong> d8+1{" "}
-                        <Tag handwritten>reach, 1 piercing</Tag>
-                      </>,
-                      <>
-                        <strong>Leathery Wings:</strong> allow for short bouts
-                        of flight
-                      </>,
-                      <>
-                        <strong>Jagged Teeth:</strong> d8+2{" "}
-                        <Tag handwritten>hand, messy, 1 piercing</Tag>
-                      </>,
-                      <>
-                        <strong>Thick Tail:</strong> d8+1{" "}
-                        <Tag handwritten>reach, forceful</Tag>
-                      </>,
-                      <>
-                        <strong>Razor Claws:</strong> d8+2{" "}
-                        <Tag handwritten>close, messy</Tag>
-                      </>,
-                      <>
-                        <strong>Regeneration:</strong> +4HP/heal injuries on
-                        Recovery
-                      </>,
-                      <>
-                        <strong>Grasping Pseudopods:</strong> d6+1{" "}
-                        <Tag handwritten>reach, grabby</Tag>
-                      </>,
-                    ]}
-                  />
-                </div>
-
-                <Divider />
-
-                <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-                    Instinct <br className="md:hidden" />
-                    <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
-                      pick 1, fulfill it to revert to human form
-                    </span>
-                  </h4>
-                  <CheckboxList
-                    variant="instinct"
-                    items={[
-                      "To challenge rivals",
-                      "To be worshiped",
-                      "To run with the pack",
-                      "To make them cower",
-                      "To rampage",
-                      "To devour (pick 1)",
-                      "To wreak mischief",
-                    ]}
-                  />
-                </div>
-
-                <Divider />
-
-                <div className="space-y-3">
-                  <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-                    Bane <br className="md:hidden" />
-                    <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
-                      pick 1 or 2, Defy Danger to act against it
-                    </span>
-                  </h4>
-                  <CheckboxList
-                    variant="bane"
-                    items={[
-                      <>
-                        <strong>Bronze implements</strong> burn the flesh
-                      </>,
-                      <>
-                        <strong>Bendis root</strong> compels you to flee
-                      </>,
-                      <>
-                        <strong>Bell sounds</strong> render you mindless
-                      </>,
-                      <>
-                        <strong>Holy symbols</strong> bind you
-                      </>,
-                      <>
-                        <strong>Your true name</strong> commands obedience
-                      </>,
-                    ]}
-                  />
-                </div>
-              </div>
-
-              {/* Right Column - Monster Moves */}
-              <div>
-                <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap mb-4">
-                  Monster Moves{" "}
-                  <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
-                    pick 1
-                  </span>
-                </h4>
-
-                <CheckboxList
-                  variant="monster-move"
-                  items={[
-                    <MonsterMove title="Craving">
-                      When you indulge your instinct you may go without
-                      sustenance and heal as if you had made camp. If you go
-                      without for a season, mark a debility. If you cannot,
-                      grant control of your character to the GM until your
-                      instinct is satisfied.
-                    </MonsterMove>,
-                    <MonsterMove title="Deadly">
-                      When you deal damage with the intent to kill, increase all
-                      damage dice by one size.
-                    </MonsterMove>,
-                    <MonsterMove title="Formless">
-                      You can squeeze, flow, or ooze through surprisingly tight
-                      spaces without issue. Also gain +1 Armor when you go
-                      unarmored thanks to supernatural resilience.
-                    </MonsterMove>,
-                    <MonsterMove title="Implements of Evil">
-                      Choose 2 additional monstrous armaments from the
-                      Stranger's Monster Compendium insert.
-                    </MonsterMove>,
-                    <MonsterMove title="Monster Squad" trailing="Reign ○○">
-                      You hold domain over creatures of the night. When{" "}
-                      <Trigger>
-                        you call forth nocturnal scavengers or a pestilent swarm
-                      </Trigger>{" "}
-                      roll +CHA: <strong>on a 7+</strong>, they appear and sew
-                      chaos on your behalf but hold 1 Reign;{" "}
-                      <strong>on a 10+</strong>, hold 2 Reign;{" "}
-                      <strong>on a 6-</strong>, they sew chaos on your behalf
-                      but hold no Reign and mark XP. Spend Reign to: Shield
-                      something or someone from the chaos, or Provide aid to
-                      yourself or an ally.
-                    </MonsterMove>,
-                    <MonsterMove title="Nightbreed">
-                      You can smell and track blood from miles away and when you
-                      taste blood and <Trigger>Seek Insight</Trigger> you may
-                      roll +CON. If you do you can always ask "What is the
-                      extent of their injuries?" for free, even on a 6-.
-                    </MonsterMove>,
-                    <MonsterMove title="Night Crawler">
-                      When you{" "}
-                      <Trigger>
-                        climb, cling to, or skitter across a sheer surface
-                      </Trigger>{" "}
-                      you cannot fall and you make any rolls to hide, hunt prey,
-                      or traverse terrain with advantage.
-                    </MonsterMove>,
-                    <MonsterMove title="Release the Beast">
-                      You are capable of exceptional strength.{" "}
-                      <Trigger>
-                        When you lift, throw, or break something in a display of
-                        frightening power
-                      </Trigger>{" "}
-                      your attacks gain the <Tag>forceful</Tag> and{" "}
-                      <Tag>area</Tag> tags and you Let Fly with +STR but the GM
-                      will choose one: What you've done cannot be undone, or You
-                      risk collateral damage in addition to other consequences.
-                    </MonsterMove>,
-                  ]}
-                />
-              </div>
-            </div>
-          </div>
-        </section>
+        <MonsterCompendium className="mb-16" />
 
         {/* Footer */}
         <footer className="mt-20 text-center">

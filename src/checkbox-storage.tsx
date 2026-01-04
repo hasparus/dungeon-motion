@@ -15,33 +15,33 @@ export const CheckboxStorage = () => {
     if (saved) {
       try {
         const selected = JSON.parse(saved);
-        checkboxes.forEach((cb) => {
+        for (const cb of checkboxes) {
           if (selected[cb.value]) {
             cb.checked = true;
           }
-        });
-      } catch (e) {
-        console.warn("Failed to parse saved moves", e);
+        }
+      } catch (error) {
+        console.warn("Failed to parse saved moves", error);
       }
     }
 
     // Save state on change
     const handleChange = () => {
       const selected: Record<string, boolean> = {};
-      checkboxes.forEach((cb) => {
+      for (const cb of checkboxes) {
         selected[cb.value] = cb.checked;
-      });
+      }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
     };
 
-    checkboxes.forEach((cb) => {
+    for (const cb of checkboxes) {
       cb.addEventListener("change", handleChange);
-    });
+    }
 
     return () => {
-      checkboxes.forEach((cb) => {
+      for (const cb of checkboxes) {
         cb.removeEventListener("change", handleChange);
-      });
+      }
     };
   }, []);
 

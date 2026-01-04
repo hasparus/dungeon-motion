@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "bunx astro dev",
     "build": "bunx astro build",
-    "preview": "bunx astro preview"
+    "preview": "bunx astro preview",
+    "lint": "bunx eslint .",
+    "lint:fix": "bunx eslint . --fix"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
@@ -16,8 +18,13 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.9.3"
+    "eslint": "^9.39.2",
+    "eslint-plugin-perfectionist": "^5.2.0",
+    "eslint-plugin-unicorn": "^62.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.51.0"
   }
 }

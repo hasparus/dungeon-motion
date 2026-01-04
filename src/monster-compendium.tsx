@@ -5,7 +5,7 @@ import { MoveCard } from "./move-card";
 import { Tag } from "./tag";
 import { Trigger } from "./trigger";
 
-export function MonsterCompendium(props: CompendiumProps) {
+export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
   return (
     <Compendium {...props} title="Monster Compendium">
       <div className="mt-4 grid md:grid-cols-2 gap-8">

@@ -59,6 +59,7 @@ export default tseslint.config(
           internalPattern: ["^#.*"],
         },
       ],
+      "perfectionist/sort-jsx-props": "warn",
       "perfectionist/sort-modules": "off",
       "perfectionist/sort-objects": ["warn", objectsOrderOptions],
     },
@@ -74,6 +75,12 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ["dist", ".astro", "src/routeTree.gen.ts", "node_modules", "**/.wrangler/tmp/**/*"],
+    ignores: [
+      "dist",
+      ".astro",
+      "src/routeTree.gen.ts",
+      "node_modules",
+      "**/.wrangler/tmp/**/*",
+    ],
   }
 );

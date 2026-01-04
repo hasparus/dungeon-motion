@@ -1,22 +1,23 @@
+import { Columns } from "./columns";
 import { MonsterCompendium } from "./monster-compendium";
 import { MoveCard } from "./move-card";
 import { SectionDivider } from "./section-divider";
 import { Tag } from "./tag";
 import { Trigger } from "./trigger";
+import { WielderCompendium } from "./wielder-compendium";
 
 export const Moves = () => {
   return (
     <form className="min-h-screen">
       <GrainOverlay />
 
-      <div className="relative max-w-4xl mx-auto px-6">
+      <div className="relative max-w-4xl mx-auto px-6 print:px-0">
         <section className="mb-16">
-          <div className="md:columns-2 md:gap-x-12">
+          <Columns>
             <MoveCard
-              hasResource
               id="pariah"
-              resourceCount={4}
               resourceName="Fear"
+              resources={4}
               title="Pariah"
             >
               <p>
@@ -51,11 +52,10 @@ export const Moves = () => {
             </MoveCard>
 
             <MoveCard
-              hasResource
               id="unstoppable"
               requirement="Hard to Kill"
-              resourceCount={5}
               resourceName=""
+              resources={5}
               title="Unstoppable"
             >
               <p>
@@ -112,11 +112,7 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
-            <MoveCard
-              id="alpha"
-              requirement="Wild Speech"
-              title="Alpha"
-            >
+            <MoveCard id="alpha" requirement="Wild Speech" title="Alpha">
               <p>
                 When you{" "}
                 <Trigger>
@@ -149,28 +145,9 @@ export const Moves = () => {
             </MoveCard>
 
             <MoveCard
-              className="md:[column-span:all]"
-              id="otherkin"
-              title="Otherkin"
-            >
-              <p className="flex items-center gap-2 mb-2">
-                <input className="w-3 h-3" type="checkbox" />
-                <input className="w-3 h-3" type="checkbox" />
-                <input className="w-3 h-3" type="checkbox" />
-              </p>
-              <p>
-                Your human form is but a guise. Fill out the Stranger's Monster
-                Compendium insert. Each time you select this move, choose a new
-                monster move. You may undergo Metamorphosis at any time to take
-                on your monstrous traits, instinct, bane, moves, etc.
-              </p>
-            </MoveCard>
-
-            <MoveCard
-              hasResource
               id="ravensVoice"
-              resourceCount={1}
               resourceName="Memory"
+              resources={1}
               title="Raven's Voice"
             >
               <p>
@@ -232,13 +209,7 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
-            <MoveCard
-              hasResource
-              id="turnTheSoil"
-              resourceCount={1}
-              resourceName=""
-              title="Turn the Soil"
-            >
+            <MoveCard id="turnTheSoil" resources={1} title="Turn the Soil">
               <p>
                 Once per expedition when you{" "}
                 <Trigger>Have What You Need</Trigger> you may choose to retrieve
@@ -287,33 +258,6 @@ export const Moves = () => {
               </ul>
             </MoveCard>
 
-            <MoveCard id="nightmare" requirement="Pariah" title="Nightmare">
-              <p>
-                You can spend Fear to ask questions from the Seek Insight list.
-              </p>
-            </MoveCard>
-
-            <MoveCard
-              hasResource
-              id="unstoppable"
-              requirement="Hard to Kill"
-              resourceCount={5}
-              resourceName=""
-              title="Unstoppable"
-            >
-              <p>
-                When you <Trigger>are reduced to 0 HP in battle</Trigger>, you
-                can keep fighting. Each time you take damage while at 0 HP, mark
-                1. If something would heal you while you keep fighting, clear
-                one mark instead.
-              </p>
-              <p className="mt-2">
-                When you <Trigger>stop fighting</Trigger>, roll for Death's Door
-                with a -1 penalty for each circle marked. If you survive, clear
-                all your circles.
-              </p>
-            </MoveCard>
-
             <MoveCard
               id="musclebound"
               requirement="Strength +2 or higher"
@@ -326,38 +270,22 @@ export const Moves = () => {
                 even more so.
               </p>
             </MoveCard>
-
-            <MoveCard id="alpha" requirement="Wild Speech" title="Alpha">
-              <p>
-                When you{" "}
-                <Trigger>
-                  assert your dominance over a beast or spirit of the wild
-                </Trigger>
-                , roll +WIS: <strong>on a 7+</strong>, it must choose 1 from the
-                list below; <strong>on a 10+</strong>, you also gain advantage
-                on your next roll against it.
-              </p>
-              <ul className="diamond mt-3 space-y-1">
-                <li>Fight you for dominance</li>
-                <li>Slink away or flee, then avoid you</li>
-                <li>Accept your authority, at least for now</li>
-              </ul>
-            </MoveCard>
-          </div>
+          </Columns>
         </section>
 
         <SectionDivider />
 
-        {/* Advanced Moves */}
+        {/* Otherkin Move */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-stone-800 dark:text-stone-100 tracking-wide mb-2 text-center">
-            Advanced Moves
-          </h2>
-          <p className="text-center text-stone-500 dark:text-stone-400 mb-8">
-            Requires level 6 or higher
-          </p>
-
-          <div className="md:columns-2 md:gap-x-12 gap-6">
+          <Columns>
+            <MoveCard checkboxes={3} id="otherkin" title="Otherkin">
+              <p>
+                Your human form is but a guise. Fill out the Monster Compendium
+                insert. Each time you select this move, choose a new monster
+                move. You may undergo Metamorphosis at any time to take on your
+                monstrous traits, instinct, bane, moves, etc.
+              </p>
+            </MoveCard>
             <MoveCard
               id="acceptance"
               requirement="level 6+ and Otherkin"
@@ -370,30 +298,15 @@ export const Moves = () => {
                 bane and retain control.
               </p>
             </MoveCard>
-
-            <MoveCard
-              id="dreamDancer"
-              requirement="level 6+ and Sleepwalker"
-              title="Dream Dancer"
-            >
-              <p>
-                When you{" "}
-                <Trigger>
-                  enter a dream and craft and shape it to your will
-                </Trigger>{" "}
-                you roll +CHA: <strong>on a 10+</strong>, you can do anything
-                you imagine; <strong>on a 7-9</strong>, you do it but the dream
-                turns sour. Either allow the GM to make a hard move or awaken,
-                suddenly, in a cold sweat.
-              </p>
-            </MoveCard>
-          </div>
+          </Columns>
         </section>
-
-        <SectionDivider />
 
         {/* Monster Compendium */}
         <MonsterCompendium className="mb-16" />
+
+        <SectionDivider className="" />
+
+        <WielderCompendium className="mb-16" />
 
         {/* Footer */}
         <footer className="mt-20 text-center">
@@ -406,6 +319,10 @@ export const Moves = () => {
             moves from{" "}
             <a href="https://www.kickstarter.com/projects/1735046512/stonetop">
               Stonetop
+            </a>{" "}
+            and{" "}
+            <a href="https://spoutinglore.blogspot.com/2018/07/homebrew-world.html">
+              Homebrew World
             </a>
             {" · "}set in{" "}
             <a href="https://velvetyne.fr/fonts/avara/">Avara by Velvetyne</a>

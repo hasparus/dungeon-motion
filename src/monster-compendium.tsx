@@ -31,7 +31,7 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
 
           <div className="space-y-4">
             <h4 className="text-lg font-bold text-stone-800 dark:text-stone-100 tracking-wide max-md:flex-wrap">
-              Traits <br className="md:hidden" />
+              Traits <br />
               <span className="font-normal text-sm text-stone-500 dark:text-stone-400">
                 pick 2 per bane plus <Tag>terrifying</Tag> and{" "}
                 <Tag>unnatural</Tag>
@@ -120,7 +120,7 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
                   <Tag handwritten>reach, grabby</Tag>
                 </>,
               ]}
-              variant="armament"
+              variant="small"
             />
           </div>
 
@@ -174,7 +174,7 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
                   <strong>Your true name</strong> commands obedience
                 </>,
               ]}
-              variant="bane"
+              variant="small"
             />
           </div>
         </div>
@@ -206,8 +206,8 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
                 to supernatural resilience.
               </CompendiumMove>,
               <CompendiumMove title="Implements of Evil">
-                Choose 2 additional monstrous armaments from the Stranger's
-                Monster Compendium insert.
+                Choose 2 additional monstrous armaments from the Monster
+                Compendium insert.
               </CompendiumMove>,
               <CompendiumMove title="Monster Squad" trailing="Reign ○○">
                 You hold domain over creatures of the night. When{" "}
@@ -247,7 +247,7 @@ export function MonsterCompendium(props: Omit<CompendiumProps, "title">) {
                 addition to other consequences.
               </CompendiumMove>,
             ]}
-            variant="monster-move"
+            variant="compendium-move"
           />
         </div>
       </div>

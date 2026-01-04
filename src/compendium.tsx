@@ -6,6 +6,7 @@ export interface CompendiumMoveProps {
   trailing?: string;
 }
 
+// TODO: Remove this and use just a MoveCard variant="small"
 export const CompendiumMove = ({
   children,
   title,
@@ -41,7 +42,7 @@ export function Compendium({
   return (
     <section
       className={cn(
-        "md:border border-stone-300 dark:border-stone-700 md:p-8 relative",
+        "md:border border-stone-300 dark:border-stone-700 md:p-8 relative print:break-inside-avoid-page",
         className ?? ""
       )}
       {...rest}

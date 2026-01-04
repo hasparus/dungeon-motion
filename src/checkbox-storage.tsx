@@ -16,7 +16,7 @@ export const CheckboxStorage = () => {
       try {
         const selected = JSON.parse(saved);
         for (const cb of checkboxes) {
-          if (selected[cb.value]) {
+          if (cb.name && selected[cb.name]) {
             cb.checked = true;
           }
         }

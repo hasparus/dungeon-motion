@@ -46,6 +46,8 @@ input[type="checkbox"]::before {
   content: "";
   width: 0.65em;
   height: 0.65em;
+  aspect-ratio: 1;
+  flex-shrink: 0;
   transform: scale(0);
   box-shadow: inset 1em 1em currentColor;
   transform-origin: bottom left;
@@ -74,11 +76,12 @@ input[type="checkbox"]:disabled {
 
 @media print {
   @page {
-    size: A4;
+    size: A5 portrait;
   }
 
   html {
     color: black;
+    font-size: 8pt;
   }
 
   body {
@@ -139,6 +142,8 @@ ul.diamond > li::before {
   content: "◈";
   color: var(--color-stone-400);
   margin-right: 0.5rem;
+  position: relative;
+  top: -0.03em;
 }
 
 @media (prefers-color-scheme: dark) {

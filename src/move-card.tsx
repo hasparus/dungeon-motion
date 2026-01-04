@@ -7,6 +7,7 @@ export interface MoveCardProps {
   children: React.ReactNode;
   className?: string;
   id?: string;
+  isBaseMove?: boolean;
   requirement?: string;
   resourceName?: string;
   resources?: number;
@@ -19,6 +20,7 @@ export const MoveCard = ({
   checkboxes,
   children,
   className = "",
+  isBaseMove = false,
   requirement,
   resourceName = "",
   resources,
@@ -36,16 +38,18 @@ export const MoveCard = ({
     >
       <div className="flex-1">
         <div className={cn("flex items-center", isSmall ? "gap-2" : "gap-2.5")}>
-          <input
-            aria-describedby={`${id}-title`}
-            className={cn(
-              "shrink-0 aspect-square",
-              isSmall ? "mt-[-3.5px] size-4" : "-mt-0.75 size-4.5"
-            )}
-            id={id}
-            name={id}
-            type="checkbox"
-          />
+          {!isBaseMove && (
+            <input
+              aria-describedby={`${id}-title`}
+              className={cn(
+                "shrink-0 aspect-square",
+                isSmall ? "mt-[-3.5px] size-4" : "-mt-0.75 size-4.5"
+              )}
+              id={id}
+              name={id}
+              type="checkbox"
+            />
+          )}
           <h3
             className={`tracking-wide font-bold text-stone-800 dark:text-stone-100 ${
               isSmall ? "" : "text-xl [text-box-trim:trim-end]"

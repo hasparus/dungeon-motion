@@ -1,5 +1,6 @@
 import { CheckboxList } from "./checkbox-list";
 import { Columns } from "./columns";
+import { DiegeticImprovement } from "./diegetic-improvemnet";
 import { MonsterCompendium } from "./monster-compendium";
 import { MoveCard } from "./move-card";
 import { SectionDivider } from "./section-divider";
@@ -217,12 +218,12 @@ export const Moves = () => {
                   interact with an NPC and wish to slip from their memory
                   immediately
                 </Trigger>
-                , roll +CHA: <strong>on a 10+</strong>, they forget you instantly
-                and remember instead something plausible of your choosing;{" "}
-                <strong>on a 7-9</strong>, they forget you instantly, but are
-                shaken or upset by the experience; <strong>on a 6-</strong>, they
-                remember you, for now, and some detail about you will stick with
-                them indefinitely.
+                , roll +CHA: <strong>on a 10+</strong>, they forget you
+                instantly and remember instead something plausible of your
+                choosing; <strong>on a 7-9</strong>, they forget you instantly,
+                but are shaken or upset by the experience;{" "}
+                <strong>on a 6-</strong>, they remember you, for now, and some
+                detail about you will stick with them indefinitely.
               </p>
             </MoveCard>
 
@@ -374,7 +375,6 @@ export const Moves = () => {
             <MoveCard id="weaponSpecializations" title="Weapon Specializations">
               <p className="mb-3">Pick two.</p>
               <CheckboxList
-                variant="small"
                 items={[
                   <>
                     When you <Trigger>Defend with a sword</Trigger> and spend
@@ -416,17 +416,17 @@ export const Moves = () => {
                       Deal Damage with a dagger or knife while grappling your
                       foe
                     </Trigger>
-                    , you ignore their armor unless they are <Tag>amorphous</Tag>{" "}
-                    (ask the GM)
+                    , you ignore their armor unless they are{" "}
+                    <Tag>amorphous</Tag> (ask the GM)
                   </>,
                 ]}
+                variant="small"
               />
             </MoveCard>
 
             <MoveCard id="tricksOfTheTrade" title="Tricks of the Trade">
-              When you{" "}
-              <Trigger>pick locks or pockets or disable traps</Trigger>, roll
-              +DEX: <strong>on a 10+</strong>, you do it, no problem;{" "}
+              When you <Trigger>pick locks or pockets or disable traps</Trigger>
+              , roll +DEX: <strong>on a 10+</strong>, you do it, no problem;{" "}
               <strong>on a 7-9</strong>, you still do it, but the GM will offer
               you two options between suspicion, danger, or cost.
             </MoveCard>
@@ -482,6 +482,10 @@ export const Moves = () => {
         <SectionDivider className="print:hidden mb-16" />
 
         <WielderCompendium className="mb-16" />
+
+        <SectionDivider className="print:hidden mb-16" />
+
+        <DiegeticImprovement className="mb-16" />
 
         {/* Footer */}
         <footer className="mt-20 text-center">

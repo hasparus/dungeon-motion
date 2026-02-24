@@ -1,5 +1,5 @@
 import { getStroke } from "perfect-freehand";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 
 type InputPoint = [x: number, y: number, pressure: number] | [x: number, y: number];
 
@@ -36,7 +36,12 @@ const STROKE_OPTIONS = {
   thinning: 0.5,
 } as const;
 
-export function PortraitCanvas() {
+export interface PortraitCanvasHandle {
+  clear: () => void;
+  hasStrokes: boolean;
+}
+
+export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange?: (has: boolean) => void }>(function PortraitCanvas({ onStrokesChange }, ref) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [strokes, setStrokes] = useState<InputPoint[][]>([]);
   const [currentStroke, setCurrentStroke] = useState<InputPoint[] | null>(null);
@@ -45,6 +50,11 @@ export function PortraitCanvas() {
     setStrokes([]);
     localStorage.removeItem("dungeon-motion-portrait");
   }, []);
+
+  useImperativeHandle(ref, () => ({
+    clear: handleClear,
+    hasStrokes: strokes.length > 0,
+  }), [handleClear, strokes.length]);
 
   const getPoint = useCallback(
     (e: React.PointerEvent): InputPoint => {
@@ -98,8 +108,9 @@ export function PortraitCanvas() {
     }
   }, []);
 
-  // Save to localStorage
+  // Save to localStorage + notify parent
   useEffect(() => {
+    onStrokesChange?.(strokes.length > 0);
     if (strokes.length > 0) {
       localStorage.setItem(
         "dungeon-motion-portrait",
@@ -113,8 +124,7 @@ export function PortraitCanvas() {
     : strokes;
 
   return (
-    <>
-      <svg
+    <svg
         className="w-full h-full touch-none cursor-crosshair"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -134,18 +144,5 @@ export function PortraitCanvas() {
           );
         })}
       </svg>
-      {strokes.length > 0 && (
-        <button
-          className="absolute top-0 right-0 p-0.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 print:hidden"
-          onClick={handleClear}
-          title="Clear portrait"
-          type="button"
-        >
-          <svg className="size-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M18 6 6 18M6 6l12 12" />
-          </svg>
-        </button>
-      )}
-    </>
   );
-}
+});

@@ -1,6 +1,8 @@
+import { useRef, useState } from "react";
+
 import { cn } from "./cn";
 import { GrainOverlay } from "./grain-overlay";
-import { PortraitCanvas } from "./portrait-canvas";
+import { PortraitCanvas, type PortraitCanvasHandle } from "./portrait-canvas";
 
 export function CharacterSheet() {
   return (
@@ -55,9 +57,29 @@ function IdentityBlock() {
 }
 
 function PortraitFrame() {
+  const canvasRef = useRef<PortraitCanvasHandle>(null);
+  const [hasStrokes, setHasStrokes] = useState(false);
+
   return (
-    <div className="shrink-0 w-36 h-44 relative border-[3px] border-double border-stone-700 dark:border-stone-300 print:border-stone-800 rounded-xl [corner-shape:superellipse(-1.1)] overflow-hidden">
-      <PortraitCanvas />
+    <div className="shrink-0 w-36 h-44 relative">
+      <div className="absolute inset-0 border-[3px] border-double border-stone-700 dark:border-stone-300 print:border-stone-800 rounded-xl [corner-shape:superellipse(-1.1)] overflow-hidden">
+        <PortraitCanvas
+          onStrokesChange={setHasStrokes}
+          ref={canvasRef}
+        />
+      </div>
+      {hasStrokes && (
+        <button
+          className="absolute -top-2 -right-2 p-0.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 print:hidden"
+          onClick={() => canvasRef.current?.clear()}
+          title="Clear portrait"
+          type="button"
+        >
+          <svg className="size-3.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
@@ -90,7 +112,7 @@ interface StatDef {
 function StatBlockWithDebilities() {
   return (
     <div>
-      <p className="text-xs text-stone-500 dark:text-stone-400 mb-3">
+      <p className="font-hand text-base text-stone-500 dark:text-stone-400 mb-3">
         <span className="font-bold tracking-wider">Stats</span>{" "}
         Assign +2, +1, +1, +0, +0, −1. Debility marked → roll with
         disadvantage.
@@ -151,16 +173,16 @@ function StatPairWithFork({
 function StatBox({ stat }: { stat: StatDef }) {
   return (
     <div className="flex-1 relative border-2 border-stone-400 dark:border-stone-500 print:border-stone-500 rounded-lg [corner-shape:superellipse(-1.1)] pt-4 pb-4 px-1.5 print:px-1 text-center">
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-50 dark:bg-stone-900 print:bg-white px-1 text-[10px] font-bold tracking-wider text-stone-700 dark:text-stone-300 leading-none whitespace-nowrap">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-stone-50 dark:bg-stone-900 print:bg-white px-1 text-[10px] tracking-wider text-stone-700 dark:text-stone-300 leading-none whitespace-nowrap">
         {stat.name}
       </div>
       <input
-        className="w-full text-center font-hand text-2xl print:text-xl bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none border-none"
+        className="w-full text-center font-hand text-3xl print:text-2xl bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none border-none"
         name={`stat-${stat.abbr.toLowerCase()}`}
         placeholder="+0"
         type="text"
       />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 bg-stone-50 dark:bg-stone-900 print:bg-white px-1 text-[9px] text-stone-500 dark:text-stone-400 leading-none whitespace-nowrap">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-[calc(50%+2px)] bg-stone-50 dark:bg-stone-900 print:bg-white px-1 text-[9px] text-stone-500 dark:text-stone-400 leading-none whitespace-nowrap">
         ({stat.abbr})
       </div>
     </div>
@@ -234,7 +256,7 @@ function SuppliesTrack() {
       <div className="space-y-1.5">
         {supplies.map((s) => (
           <div className="flex items-center gap-2" key={s.name}>
-            <span className="text-sm text-stone-700 dark:text-stone-300 w-32 shrink-0">
+            <span className="text-sm text-stone-700 dark:text-stone-300 shrink-0 whitespace-nowrap">
               {s.name}
             </span>
             <div className="flex gap-1">

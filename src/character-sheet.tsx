@@ -37,7 +37,7 @@ function LeftPage() {
     <div className="md:pr-8 print:pr-8 md:border-r print:border-r border-dashed border-stone-300 dark:border-stone-600 print:border-stone-400 space-y-6">
       <IdentityBlock />
       <StatBlockWithDebilities />
-      <CombatLine />
+      <CombatShapes />
       <InlineField label="Drive" name="drive" />
     </div>
   );
@@ -113,7 +113,7 @@ function StatBlockWithDebilities() {
   return (
     <div>
       <p className="font-hand text-base text-stone-500 dark:text-stone-400 mb-3">
-        <span className="font-bold tracking-wider">Stats</span>{" "}
+        <span className="font-serif font-bold tracking-wider text-stone-700 dark:text-stone-300">Stats</span>{" "}
         Assign +2, +1, +1, +0, +0, −1. Debility marked → roll with
         disadvantage.
       </p>
@@ -189,14 +189,62 @@ function StatBox({ stat }: { stat: StatDef }) {
   );
 }
 
-// -- Combat Line --
+// -- Combat Shapes (Hogtown-style shaped stat containers) --
 
-function CombatLine() {
+function CombatShapes() {
   return (
-    <div className="flex gap-4">
-      <InlineField label="HP" name="hp" />
-      <InlineField label="Armor" name="armor" />
-      <InlineField label="Damage" name="damage" />
+    <div className="flex justify-center items-end gap-8">
+      <ShapedStat label="HP" name="hp">
+        {/* Heart */}
+        <path d="M24 43C24 43 5 31 5 18C5 10 10 4 16 4C20.5 4 23 7 24 10C25 7 27.5 4 32 4C38 4 43 10 43 18C43 31 24 43 24 43Z" />
+      </ShapedStat>
+      <ShapedStat label="Armor" name="armor">
+        {/* Shield / escutcheon */}
+        <path d="M6 5L42 5L42 28Q42 43 24 47Q6 43 6 28Z" />
+      </ShapedStat>
+      <ShapedStat label="Damage" name="damage">
+        {/* Die (d6 face with corner pips) */}
+        <rect height="38" rx="5" width="38" x="5" y="5" />
+        <circle cx="15" cy="15" fill="currentColor" opacity="0.15" r="2.5" stroke="none" />
+        <circle cx="33" cy="15" fill="currentColor" opacity="0.15" r="2.5" stroke="none" />
+        <circle cx="15" cy="33" fill="currentColor" opacity="0.15" r="2.5" stroke="none" />
+        <circle cx="33" cy="33" fill="currentColor" opacity="0.15" r="2.5" stroke="none" />
+      </ShapedStat>
+    </div>
+  );
+}
+
+function ShapedStat({
+  children,
+  label,
+  name,
+}: {
+  children: React.ReactNode;
+  label: string;
+  name: string;
+}) {
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-[9px] font-bold tracking-wider text-stone-500 dark:text-stone-400 mb-0.5">
+        {label}
+      </span>
+      <div className="relative w-16 h-16">
+        <svg
+          className="absolute inset-0 w-full h-full text-stone-400 dark:text-stone-500 print:text-stone-500"
+          fill="none"
+          stroke="currentColor"
+          strokeLinejoin="round"
+          strokeWidth="1.5"
+          viewBox="0 0 48 48"
+        >
+          {children}
+        </svg>
+        <input
+          className="absolute inset-0 w-full h-full pt-1 text-center font-hand text-xl bg-transparent text-stone-800 dark:text-stone-200 focus:outline-none"
+          name={name}
+          type="text"
+        />
+      </div>
     </div>
   );
 }
@@ -280,18 +328,18 @@ function AcquiredMoves() {
   return (
     <div>
       <SectionLabel>Moves</SectionLabel>
-      <div className="space-y-1.5">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div className="flex items-center gap-2" key={i}>
+      <div className="space-y-2">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div className="flex items-start gap-2" key={i}>
             <input
-              className="size-3 shrink-0"
+              className="size-3 shrink-0 mt-1.5"
               name={`move-check-${i}`}
               type="checkbox"
             />
-            <input
-              className="flex-1 bg-transparent border-b border-stone-300 dark:border-stone-600 print:border-stone-400 font-hand text-lg text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-500"
+            <textarea
+              className="flex-1 bg-transparent border-b border-stone-300 dark:border-stone-600 print:border-stone-400 font-hand text-base text-stone-800 dark:text-stone-200 focus:outline-none focus:border-stone-500 resize-none [field-sizing:content] print:min-h-10"
               name={`move-name-${i}`}
-              type="text"
+              rows={1}
             />
           </div>
         ))}

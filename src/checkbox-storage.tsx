@@ -5,12 +5,12 @@ export const CheckboxStorage = () => {
     const form = document.querySelector("form");
     if (!form) return;
 
+    // --- Checkbox persistence ---
     const STORAGE_KEY = "dungeon-motion-selections";
     const checkboxes = form.querySelectorAll<HTMLInputElement>(
       'input[type="checkbox"]'
     );
 
-    // Load saved state from localStorage
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -25,7 +25,6 @@ export const CheckboxStorage = () => {
       }
     }
 
-    // Save state on change
     const handleChange = () => {
       const selected: Record<string, boolean> = {};
       for (const cb of checkboxes) {
@@ -38,9 +37,49 @@ export const CheckboxStorage = () => {
       cb.addEventListener("change", handleChange);
     }
 
+    // --- Text/number/textarea/select persistence ---
+    const FIELDS_KEY = "dungeon-motion-fields";
+    const fields = form.querySelectorAll<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >('input[type="text"], input[type="number"], textarea, select');
+
+    const savedFields = localStorage.getItem(FIELDS_KEY);
+    if (savedFields) {
+      try {
+        const values: Record<string, string> = JSON.parse(savedFields);
+        for (const field of fields) {
+          if (field.name && values[field.name] !== undefined) {
+            field.value = values[field.name];
+          }
+        }
+      } catch (error) {
+        console.warn("Failed to parse saved fields", error);
+      }
+    }
+
+    let debounceTimer: ReturnType<typeof setTimeout>;
+    const handleFieldInput = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const values: Record<string, string> = {};
+        for (const field of fields) {
+          if (field.name) values[field.name] = field.value;
+        }
+        localStorage.setItem(FIELDS_KEY, JSON.stringify(values));
+      }, 300);
+    };
+
+    for (const field of fields) {
+      field.addEventListener("input", handleFieldInput);
+    }
+
     return () => {
+      clearTimeout(debounceTimer);
       for (const cb of checkboxes) {
         cb.removeEventListener("change", handleChange);
+      }
+      for (const field of fields) {
+        field.removeEventListener("input", handleFieldInput);
       }
     };
   }, []);

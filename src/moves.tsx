@@ -1,6 +1,7 @@
 import { CheckboxList } from "./checkbox-list";
 import { Columns } from "./columns";
 import { DiegeticImprovement } from "./diegetic-improvemnet";
+import { GrainOverlay } from "./grain-overlay";
 import { MonsterCompendium } from "./monster-compendium";
 import { MoveCard } from "./move-card";
 import { SectionDivider } from "./section-divider";
@@ -445,6 +446,48 @@ export const Moves = () => {
             <MoveCard id="walkThroughTheValley" title="Walk Through the Valley">
               You are unaffected by poison or disease.
             </MoveCard>
+
+            <MoveCard id="countermeasures" title="Countermeasures">
+              <p>
+                When you <Trigger>witness a magical effect</Trigger>, you may
+                ask the GM, "how can this be countered or interrupted?" and get
+                an honest answer. You or an ally gain advantage on your next
+                roll to act on the answer.
+              </p>
+            </MoveCard>
+
+            <MoveCard id="everythingBleeds" title="Everything Bleeds">
+              <p>
+                When you{" "}
+                <Trigger>
+                  exploit an unnatural foe's specific weakness or vulnerability
+                </Trigger>
+                , deal +1d6 damage.
+              </p>
+            </MoveCard>
+
+            <MoveCard id="everythingBurns" title="Everything Burns">
+              <p>
+                When you{" "}
+                <Trigger>
+                  inspect a work of artifice or magic for a fatal flaw
+                </Trigger>
+                , roll +INT: <strong>on a 7+</strong>, the GM will reveal the
+                best way to destroy/sabotage it; <strong>on a 10+</strong>, you
+                or an ally also gain advantage to act on the info.
+              </p>
+            </MoveCard>
+
+            <MoveCard
+              checkboxes={3}
+              id="improvedStat"
+              title="Improved Stat"
+            >
+              <p>
+                Each time you take this move, increase one of your stats by 1
+                (to a max of +2).
+              </p>
+            </MoveCard>
           </Columns>
         </section>
 
@@ -514,17 +557,3 @@ export const Moves = () => {
   );
 };
 
-function GrainOverlay() {
-  return (
-    <div className="fixed inset-0 pointer-events-none opacity-5 invert dark:invert-0 z-100">
-      <div
-        className="w-full h-full"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          filter: "contrast(170%) brightness(1000%)",
-          mixBlendMode: "overlay",
-        }}
-      />
-    </div>
-  );
-}

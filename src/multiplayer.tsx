@@ -90,7 +90,9 @@ export function Multiplayer() {
     setRoom(globalThis.location.hash.slice(1));
 
     const doc = new Y.Doc();
-    const provider = new WebrtcProvider(roomName, doc);
+    const provider = new WebrtcProvider(roomName, doc, {
+      signaling: ["wss://y-webrtc-eu.fly.dev"],
+    });
     docRef.current = doc;
     providerRef.current = provider;
 

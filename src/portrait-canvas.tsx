@@ -90,11 +90,11 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
   );
 
   const handlePointerUp = useCallback(() => {
-    if (currentStroke) {
-      setStrokes((prev) => [...prev, currentStroke]);
-      setCurrentStroke(null);
-    }
-  }, [currentStroke]);
+    setCurrentStroke((stroke) => {
+      if (stroke) setStrokes((prev) => [...prev, stroke]);
+      return null;
+    });
+  }, []);
 
   // Load from localStorage
   useEffect(() => {

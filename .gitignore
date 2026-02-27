@@ -2,3 +2,5 @@ node_modules
 bun.lock
 .DS_Store
 dist
+.astro
+test-results

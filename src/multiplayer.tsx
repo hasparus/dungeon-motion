@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import * as Y from "yjs";
 import { WebrtcProvider } from "y-webrtc";
+import * as Y from "yjs";
 
 const ROOM_PREFIX = "dungeon-motion-";
 
@@ -16,14 +16,14 @@ function getRoom(): string {
  * Binds a Y.Map to all named form elements inside a <form>.
  * Remote changes update DOM directly. Local input events push to the map.
  */
-function bindForm(form: HTMLFormElement, ymap: Y.Map<string | boolean>) {
+function bindForm(form: HTMLFormElement, ymap: Y.Map<boolean | string>) {
   let suppressing = false;
 
   // Push local → ymap
   const onInput = () => {
     if (suppressing) return;
     for (const el of form.elements) {
-      const f = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      const f = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (!f.name) continue;
       if (f instanceof HTMLInputElement && f.type === "checkbox") {
         ymap.set(f.name, f.checked);
@@ -39,7 +39,7 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<string | boolean>) {
   const observer = () => {
     suppressing = true;
     for (const el of form.elements) {
-      const f = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+      const f = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
       if (!f.name) continue;
       const v = ymap.get(f.name);
       if (v === undefined) continue;
@@ -58,7 +58,7 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<string | boolean>) {
 
   // Seed from existing form state on connect
   for (const el of form.elements) {
-    const f = el as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    const f = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
     if (!f.name) continue;
     // Only seed if ymap doesn't already have a value (don't overwrite remote state)
     if (ymap.has(f.name)) continue;
@@ -80,12 +80,17 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<string | boolean>) {
 }
 
 export function Multiplayer() {
+  // Allow tests to disable multiplayer via page.addInitScript
+  const [skip] = useState(
+    () => globalThis.window !== undefined && "__PW_TEST__" in globalThis,
+  );
   const [peers, setPeers] = useState(0);
   const [room, setRoom] = useState("");
   const docRef = useRef<Y.Doc | null>(null);
   const providerRef = useRef<WebrtcProvider | null>(null);
 
   useEffect(() => {
+    if (skip) return;
     const roomName = getRoom();
     setRoom(globalThis.location.hash.slice(1));
 
@@ -96,7 +101,7 @@ export function Multiplayer() {
     docRef.current = doc;
     providerRef.current = provider;
 
-    const ymap = doc.getMap<string | boolean>("sheet");
+    const ymap = doc.getMap<boolean | string>("sheet");
 
     // Wait for form to mount
     const form = document.querySelector("form");

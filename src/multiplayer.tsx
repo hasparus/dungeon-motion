@@ -33,7 +33,9 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<boolean | string>) {
 
   const onChange = onInput;
 
-  // Pull ymap → DOM
+  // Pull ymap → DOM. Dispatch input/change so other listeners (e.g.
+  // CheckboxStorage → localStorage) see remote edits. suppressing blocks
+  // the echo back into ymap.
   const observer = () => {
     suppressing = true;
     for (const el of form.elements) {
@@ -42,10 +44,15 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<boolean | string>) {
       const v = ymap.get(f.name);
       if (v === undefined) continue;
       if (f instanceof HTMLInputElement && f.type === "checkbox") {
+        if (f.checked === v) continue;
         f.checked = v as boolean;
       } else if (f.value !== v) {
         f.value = v as string;
+      } else {
+        continue;
       }
+      f.dispatchEvent(new Event("input", { bubbles: true }));
+      f.dispatchEvent(new Event("change", { bubbles: true }));
     }
     suppressing = false;
   };

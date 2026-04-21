@@ -95,7 +95,7 @@ function SheetControls() {
           // Fill gear into the first inventory slot area
           const form = document.querySelector("form");
           if (form) {
-            const gearField = form.querySelector<HTMLTextAreaElement | HTMLInputElement>('[name="gear"]');
+            const gearField = form.querySelector<HTMLTextAreaElement | HTMLInputElement>('[name="possession-0"]');
             if (gearField) gearField.value = v.gear.join(", ");
           }
         }}

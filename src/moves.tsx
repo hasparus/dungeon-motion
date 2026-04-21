@@ -466,6 +466,30 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
+            <MoveCard id="crackTheCodex" title="Crack the Codex">
+              <p>
+                When you{" "}
+                <Trigger>
+                  cast a spell from a stolen spellbook, whose prerequisites
+                  you have already cast before
+                </Trigger>
+                , roll +INT. <strong>On a 10+</strong>, you cast it
+                successfully. <strong>On a 7-9</strong>, you cast it, but pick
+                one:
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>
+                  Draw unwanted attention or put yourself in a spot; the GM
+                  will say how
+                </li>
+                <li>
+                  Reality twists around you (say how) and you take -1 ongoing
+                  (cumulative) when casting spells until you Make Camp
+                </li>
+                <li>The spell is unstable, short-lived, or imprecise</li>
+              </ul>
+            </MoveCard>
+
             <MoveCard id="everythingBurns" title="Everything Burns">
               <p>
                 When you{" "}

@@ -20,16 +20,14 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<boolean | string>) {
   let suppressing = false;
 
   // Push local → ymap
-  const onInput = () => {
+  const onInput = (e: Event) => {
     if (suppressing) return;
-    for (const el of form.elements) {
-      const f = el as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-      if (!f.name) continue;
-      if (f instanceof HTMLInputElement && f.type === "checkbox") {
-        ymap.set(f.name, f.checked);
-      } else {
-        ymap.set(f.name, f.value);
-      }
+    const f = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (!f.name) return;
+    if (f instanceof HTMLInputElement && f.type === "checkbox") {
+      ymap.set(f.name, f.checked);
+    } else {
+      ymap.set(f.name, f.value);
     }
   };
 

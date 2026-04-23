@@ -104,7 +104,11 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      (e.target as Element).setPointerCapture(e.pointerId);
+      try {
+        (e.target as Element).setPointerCapture(e.pointerId);
+      } catch {
+        // setPointerCapture can throw in some headless environments; ignore
+      }
       dispatch({ type: "start", point: getPoint(e) });
     },
     [getPoint]

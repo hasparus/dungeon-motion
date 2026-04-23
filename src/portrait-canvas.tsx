@@ -53,7 +53,9 @@ function reducer(state: State, action: Action): State {
     case "move":
       return { ...state, current: [...(state.current || []), action.point] };
     case "end":
-      return { strokes: [...state.strokes, state.current || []], current: null };
+      return state.current
+        ? { strokes: [...state.strokes, state.current], current: null }
+        : state;
     case "clear":
       return { strokes: [], current: null };
     case "load":

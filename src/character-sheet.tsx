@@ -51,14 +51,12 @@ function applySheet(data: SheetData) {
     } else {
       field.value = data[field.name] as string;
     }
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.dispatchEvent(new Event("change", { bubbles: true }));
   }
   if (typeof data["__portrait__"] === "string") {
     localStorage.setItem("dungeon-motion-portrait", data["__portrait__"]);
   }
-  form.dispatchEvent(new Event("input", { bubbles: true }));
-  form
-    .querySelector('input[type="checkbox"]')
-    ?.dispatchEvent(new Event("change", { bubbles: true }));
 }
 
 function SheetControls() {

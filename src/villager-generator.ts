@@ -79,7 +79,7 @@ function getName(species: Species): string {
     case "Elf": return row[4];
     case "Dwarf": return row[5];
     case "Halfling": return row[6];
-    default: return roll("1d2") === 1 ? row[roll("1d2")] : row[3];
+    default: return row[roll("1d3")];
   }
 }
 

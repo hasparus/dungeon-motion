@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 import { cn } from "./cn";
 import { GrainOverlay } from "./grain-overlay";
 import { PortraitCanvas, type PortraitCanvasHandle } from "./portrait-canvas";
-import { generateVillager, type Villager } from "./villager-generator";
+import { generateVillager } from "./villager-generator";
 
 const SHEETS_KEY = "dungeon-motion-sheets";
 type SheetData = Record<string, boolean | string>;
@@ -36,6 +36,25 @@ function serializeForm(): SheetData {
   const portrait = localStorage.getItem("dungeon-motion-portrait");
   if (portrait) data["__portrait__"] = portrait;
   return data;
+}
+
+function clearForm() {
+  const form = document.querySelector("form");
+  if (!form) return;
+  for (const el of form.elements) {
+    const field = el as
+      | HTMLInputElement
+      | HTMLSelectElement
+      | HTMLTextAreaElement;
+    if (!field.name) continue;
+    if (field instanceof HTMLInputElement && field.type === "checkbox") {
+      field.checked = false;
+    } else {
+      field.value = "";
+    }
+    field.dispatchEvent(new Event("input", { bubbles: true }));
+    field.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 }
 
 function applySheet(data: SheetData) {
@@ -70,6 +89,7 @@ function SheetControls() {
         className="text-[10px] tracking-widest uppercase text-stone-400/70 dark:text-stone-500/70 hover:text-stone-600 dark:hover:text-stone-300 focus-visible:text-stone-600 dark:focus-visible:text-stone-300 focus-visible:underline underline-offset-2 outline-none transition-colors cursor-pointer"
         onClick={(e) => {
           e.preventDefault();
+          clearForm();
           const v = generateVillager();
           const formatMod = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
           const data: SheetData = {
@@ -87,7 +107,7 @@ function SheetControls() {
             "hp": String(v.hp),
             "armor": "0",
             "damage": v.damage,
-            "instinct": v.bond,
+            "bond-0": v.bond,
           };
           applySheet(data);
           // Fill gear into the first inventory slot area

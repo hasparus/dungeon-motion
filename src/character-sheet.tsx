@@ -214,7 +214,7 @@ function PortraitFrame() {
   const [hasStrokes, setHasStrokes] = useState(false);
 
   return (
-    <div className="shrink-0 w-36 self-stretch relative">
+    <div className="shrink-0 w-36 h-full relative">
       <div className="absolute inset-0 border-[3px] border-double border-stone-700 dark:border-stone-300 print:border-stone-800 rounded-xl [corner-shape:superellipse(-1.1)] overflow-hidden">
         <PortraitCanvas onStrokesChange={setHasStrokes} ref={canvasRef} />
       </div>

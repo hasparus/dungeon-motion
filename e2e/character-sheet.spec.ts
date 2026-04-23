@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
     Object.assign(globalThis, { __PW_TEST__: true });
   });
   await page.goto("/character-sheet");
+  await page.waitForSelector('body[data-hydrated="true"]');
   // Clear all app storage for test isolation
   await page.evaluate(() => {
     for (const key of Object.keys(localStorage)) {
@@ -16,6 +17,7 @@ test.beforeEach(async ({ page }) => {
     }
   });
   await page.reload();
+  await page.waitForSelector('body[data-hydrated="true"]');
 });
 
 test.describe("Character Sheet", () => {

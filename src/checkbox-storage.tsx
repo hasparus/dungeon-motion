@@ -73,6 +73,8 @@ export const CheckboxStorage = () => {
       field.addEventListener("input", handleFieldInput);
     }
 
+    document.body.dataset.hydrated = "true";
+
     return () => {
       clearTimeout(debounceTimer);
       for (const cb of checkboxes) {

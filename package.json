@@ -9,6 +9,7 @@
     "preview": "bunx astro preview",
     "lint": "bunx eslint .",
     "lint:fix": "bunx eslint . --fix",
+    "typecheck": "bunx tsc --noEmit",
     "test": "bunx playwright test",
     "test:ui": "bunx playwright test --ui"
   },

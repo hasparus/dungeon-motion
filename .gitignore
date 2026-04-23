@@ -3,3 +3,5 @@ bun.lock
 .DS_Store
 dist
 .vercel
+.astro
+test-results

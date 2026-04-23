@@ -1,5 +1,5 @@
 import { getStroke } from "perfect-freehand";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useReducer, useRef } from "react";
 
 type InputPoint = [x: number, y: number, pressure: number] | [x: number, y: number];
 
@@ -41,13 +41,43 @@ export interface PortraitCanvasHandle {
   hasStrokes: boolean;
 }
 
+type State = { strokes: InputPoint[][]; current: InputPoint[] | null };
+type Action =
+  | { type: "start"; point: InputPoint }
+  | { type: "move"; point: InputPoint }
+  | { type: "end" }
+  | { type: "clear" }
+  | { type: "load"; strokes: InputPoint[][] };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "start":
+      return {
+        strokes: state.current ? [...state.strokes, state.current] : state.strokes,
+        current: [action.point],
+      };
+    case "move":
+      return state.current
+        ? { ...state, current: [...state.current, action.point] }
+        : state;
+    case "end":
+      return { strokes: [...state.strokes, state.current || []], current: null };
+    case "clear":
+      return { strokes: [], current: null };
+    case "load":
+      return { strokes: action.strokes, current: null };
+  }
+}
+
 export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange?: (has: boolean) => void }>(function PortraitCanvas({ onStrokesChange }, ref) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [strokes, setStrokes] = useState<InputPoint[][]>([]);
-  const [currentStroke, setCurrentStroke] = useState<InputPoint[] | null>(null);
+  const [{ strokes, current }, dispatch] = useReducer(reducer, {
+    strokes: [],
+    current: null,
+  });
 
   const handleClear = useCallback(() => {
-    setStrokes([]);
+    dispatch({ type: "clear" });
     localStorage.removeItem("dungeon-motion-portrait");
   }, []);
 
@@ -75,33 +105,30 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
     (e: React.PointerEvent) => {
       e.preventDefault();
       (e.target as Element).setPointerCapture(e.pointerId);
-      setCurrentStroke([getPoint(e)]);
+      dispatch({ type: "start", point: getPoint(e) });
     },
     [getPoint]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!currentStroke) return;
+      if (!current) return;
       e.preventDefault();
-      setCurrentStroke((prev) => (prev ? [...prev, getPoint(e)] : null));
+      dispatch({ type: "move", point: getPoint(e) });
     },
-    [currentStroke, getPoint]
+    [current, getPoint]
   );
 
   const handlePointerUp = useCallback(() => {
-    if (currentStroke) {
-      setStrokes((prev) => [...prev, currentStroke]);
-      setCurrentStroke(null);
-    }
-  }, [currentStroke]);
+    dispatch({ type: "end" });
+  }, []);
 
   // Load from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("dungeon-motion-portrait");
     if (saved) {
       try {
-        setStrokes(JSON.parse(saved));
+        dispatch({ type: "load", strokes: JSON.parse(saved) });
       } catch {
         // ignore
       }
@@ -119,9 +146,7 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
     }
   }, [strokes]);
 
-  const allStrokes = currentStroke
-    ? [...strokes, currentStroke]
-    : strokes;
+  const allStrokes = current ? [...strokes, current] : strokes;
 
   return (
     <svg

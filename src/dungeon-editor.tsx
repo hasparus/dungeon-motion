@@ -102,40 +102,7 @@ function restoreCaretFromMarker(marker: HTMLElement) {
   selection.addRange(range);
 }
 
-function _applyBlockTransform(root: HTMLElement) {
-  const block = getCurrentBlock(root);
-  if (!block) return;
-
-  const text = normalizeEditableText(block.textContent ?? "");
-
-  if (block.tagName !== "LI" && text.startsWith("## ")) {
-    const next = document.createElement("h2");
-    next.innerHTML = formatInline(text.slice(3));
-    block.replaceWith(next);
-    placeCaretAtEnd(next);
-    return;
-  }
-
-  if (block.tagName !== "LI" && text.startsWith("# ")) {
-    const next = document.createElement("h1");
-    next.innerHTML = formatInline(text.slice(2));
-    block.replaceWith(next);
-    placeCaretAtEnd(next);
-    return;
-  }
-
-  if (/^[-*+]\s/.test(text)) {
-    const list = document.createElement("ul");
-    const item = document.createElement("li");
-    item.innerHTML = formatInline(text.slice(2));
-    list.append(item);
-    block.replaceWith(list);
-    placeCaretAtEnd(item);
-    return;
-  }
-}
-
-function transformInlineTextNodes(node: Node) {
+function transformInlineTextNodes(node: Node): boolean {
   let changed = false;
 
   if (node instanceof Text) {

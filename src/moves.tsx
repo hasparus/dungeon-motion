@@ -230,11 +230,10 @@ export const Moves = () => {
 
             <MoveCard id="turnTheSoil" resources={1} title="Turn the Soil">
               <p>
-                Once per expedition when you{" "}
-                <Trigger>Have What You Need</Trigger> you may choose to retrieve
-                an item one might find on a corpse or in an unturned grave up to
-                a value of 2. You needn't Requisition this item, instead choose
-                a number of options equal to its value:
+                Once per expedition when you <em>Have What You Need</em> you may
+                choose to retrieve an item one might find on a corpse or in an
+                unturned grave up to a value of 2. You needn't Requisition this
+                item, instead choose a number of options equal to its value:
               </p>
               <ul className="diamond mt-3 space-y-1 text-sm">
                 <li>
@@ -466,6 +465,31 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
+            <MoveCard
+              id="crackTheCodex"
+              resourceName="penalty"
+              resources={5}
+              title="Crack the Codex"
+            >
+              <p>
+                When you <Trigger>cast a spell from a stolen spellbook</Trigger>
+                , whose prerequisites you have already cast before, roll +INT.{" "}
+                <strong>On a 10+</strong>, you cast it successfully.{" "}
+                <strong>On a 7-9</strong>, you cast it, but pick one:
+              </p>
+              <ul className="diamond mt-3 space-y-1">
+                <li>
+                  Draw unwanted attention or put yourself in a spot; the GM will
+                  say how
+                </li>
+                <li>
+                  Reality twists around you (say how) and you take -1 ongoing
+                  (cumulative) when casting spells until you <em>Make Camp</em>
+                </li>
+                <li>The spell is unstable, short-lived, or imprecise</li>
+              </ul>
+            </MoveCard>
+
             <MoveCard id="everythingBurns" title="Everything Burns">
               <p>
                 When you{" "}
@@ -478,11 +502,7 @@ export const Moves = () => {
               </p>
             </MoveCard>
 
-            <MoveCard
-              checkboxes={3}
-              id="improvedStat"
-              title="Improved Stat"
-            >
+            <MoveCard checkboxes={3} id="improvedStat" title="Improved Stat">
               <p>
                 Each time you take this move, increase one of your stats by 1
                 (to a max of +2).
@@ -556,4 +576,3 @@ export const Moves = () => {
     </form>
   );
 };
-

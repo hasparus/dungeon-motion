@@ -9,7 +9,8 @@
     "preview": "bunx astro preview",
     "lint": "bunx eslint .",
     "lint:fix": "bunx eslint . --fix",
-    "test:e2e": "playwright test"
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui"
   },
   "dependencies": {
     "@astrojs/react": "^4.4.2",
@@ -17,7 +18,9 @@
     "astro": "^5.16.6",
     "perfect-freehand": "^1.2.3",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "y-webrtc": "^10.3.0",
+    "yjs": "^13.6.29"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

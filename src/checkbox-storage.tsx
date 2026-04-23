@@ -28,7 +28,7 @@ export const CheckboxStorage = () => {
     const handleChange = () => {
       const selected: Record<string, boolean> = {};
       for (const cb of checkboxes) {
-        selected[cb.value] = cb.checked;
+        if (cb.name) selected[cb.name] = cb.checked;
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selected));
     };

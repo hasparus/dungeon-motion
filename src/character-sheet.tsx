@@ -79,6 +79,8 @@ function applySheet(data: SheetData) {
   }
 }
 
+const formatMod = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+
 function SheetControls() {
   const [names, setNames] = useState<string[]>(() => Object.keys(getSheets()));
   const [saved, setSaved] = useState(false);
@@ -91,29 +93,28 @@ function SheetControls() {
           e.preventDefault();
           clearForm();
           const v = generateVillager();
-          const formatMod = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
           const data: SheetData = {
-            "char-name": v.name,
-            "look": v.look,
-            "background": `${v.species} ${v.occupation}`,
-            "level": "0",
-            "xp": "0",
-            "stat-str": formatMod(v.modifiers.STR),
-            "stat-dex": formatMod(v.modifiers.DEX),
-            "stat-con": formatMod(v.modifiers.CON),
-            "stat-int": formatMod(v.modifiers.INT),
-            "stat-wis": formatMod(v.modifiers.WIS),
-            "stat-cha": formatMod(v.modifiers.CHA),
-            "hp": String(v.hp),
             "armor": "0",
-            "damage": v.damage,
+            "background": `${v.species} ${v.occupation}`,
             "bond-0": v.bond,
+            "char-name": v.name,
+            "damage": v.damage,
+            "hp": String(v.hp),
+            "level": "0",
+            "look": v.look,
+            "stat-cha": formatMod(v.modifiers.CHA),
+            "stat-con": formatMod(v.modifiers.CON),
+            "stat-dex": formatMod(v.modifiers.DEX),
+            "stat-int": formatMod(v.modifiers.INT),
+            "stat-str": formatMod(v.modifiers.STR),
+            "stat-wis": formatMod(v.modifiers.WIS),
+            "xp": "0",
           };
           applySheet(data);
           // Fill gear into the first inventory slot area
           const form = document.querySelector("form");
           if (form) {
-            const gearField = form.querySelector<HTMLTextAreaElement | HTMLInputElement>('[name="possession-0"]');
+            const gearField = form.querySelector<HTMLInputElement | HTMLTextAreaElement>('[name="possession-0"]');
             if (gearField) {
               gearField.value = v.gear.join(", ");
               gearField.dispatchEvent(new Event("input", { bubbles: true }));

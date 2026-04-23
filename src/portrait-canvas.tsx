@@ -120,8 +120,8 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
   );
 
   const handlePointerUp = useCallback(() => {
-    if (current) dispatch({ type: "end" });
-  }, [current]);
+    dispatch({ type: "end" });
+  }, []);
 
   // Load from localStorage
   useEffect(() => {

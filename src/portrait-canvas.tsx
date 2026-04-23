@@ -61,9 +61,7 @@ function reducer(state: State, action: Action): State {
         ? { ...state, current: [...state.current, action.point] }
         : state;
     case "end":
-      return state.current
-        ? { strokes: [...state.strokes, state.current], current: null }
-        : state;
+      return { strokes: [...state.strokes, state.current || []], current: null };
     case "clear":
       return { strokes: [], current: null };
     case "load":
@@ -122,8 +120,8 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
   );
 
   const handlePointerUp = useCallback(() => {
-    dispatch({ type: "end" });
-  }, []);
+    if (current) dispatch({ type: "end" });
+  }, [current]);
 
   // Load from localStorage
   useEffect(() => {

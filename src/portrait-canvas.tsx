@@ -43,6 +43,7 @@ export interface PortraitCanvasHandle {
 
 type State = { strokes: InputPoint[][]; current: InputPoint[] | null };
 type Action =
+  | { type: "start"; point: InputPoint }
   | { type: "move"; point: InputPoint }
   | { type: "end" }
   | { type: "clear" }
@@ -50,8 +51,15 @@ type Action =
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
+    case "start":
+      return {
+        strokes: state.current ? [...state.strokes, state.current] : state.strokes,
+        current: [action.point],
+      };
     case "move":
-      return { ...state, current: [...(state.current || []), action.point] };
+      return state.current
+        ? { ...state, current: [...state.current, action.point] }
+        : state;
     case "end":
       return state.current
         ? { strokes: [...state.strokes, state.current], current: null }
@@ -99,7 +107,7 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
     (e: React.PointerEvent) => {
       e.preventDefault();
       (e.target as Element).setPointerCapture(e.pointerId);
-      dispatch({ type: "move", point: getPoint(e) });
+      dispatch({ type: "start", point: getPoint(e) });
     },
     [getPoint]
   );

@@ -94,7 +94,11 @@ function SheetControls() {
           const form = document.querySelector("form");
           if (form) {
             const gearField = form.querySelector<HTMLTextAreaElement | HTMLInputElement>('[name="possession-0"]');
-            if (gearField) gearField.value = v.gear.join(", ");
+            if (gearField) {
+              gearField.value = v.gear.join(", ");
+              gearField.dispatchEvent(new Event("input", { bubbles: true }));
+              gearField.dispatchEvent(new Event("change", { bubbles: true }));
+            }
           }
         }}
         type="button"

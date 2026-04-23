@@ -1,10 +1,16 @@
 import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "./e2e",
   fullyParallel: false,
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
+  reporter: [["list"], ["html", { open: "never" }]],
   retries: process.env.CI ? 2 : 0,
-  workers: 1,
+  testDir: "./e2e",
   use: {
     baseURL: "http://localhost:4321",
     screenshot: "only-on-failure",
@@ -15,10 +21,5 @@ export default defineConfig({
     port: 4321,
     reuseExistingServer: true,
   },
-  projects: [
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-  ],
+  workers: 1,
 });

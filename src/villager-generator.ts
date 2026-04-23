@@ -1,26 +1,26 @@
 // Hogtown Villager Generator — browser version (no fs)
 // Ported from hasparus/hogtown-villager-generator
 
-import occupationRows from "./data/occupations.json";
-import nameRows from "./data/names.json";
-import lookRows from "./data/looks.json";
 import bondRows from "./data/bonds.json";
+import lookRows from "./data/looks.json";
+import nameRows from "./data/names.json";
+import occupationRows from "./data/occupations.json";
 
-type Species = "Human" | "Dwarf" | "Elf" | "Halfling";
+type Species = "Dwarf" | "Elf" | "Halfling" | "Human";
 
 export interface Villager {
-  name: string;
-  species: Species;
-  occupation: string;
-  look: string;
-  stats: Record<string, number>;
-  modifiers: Record<string, number>;
-  hp: number;
-  load: number;
+  bond: string;
   damage: string;
   gear: string[];
-  bond: string;
   heritageMoves: string[];
+  hp: number;
+  load: number;
+  look: string;
+  modifiers: Record<string, number>;
+  name: string;
+  occupation: string;
+  species: Species;
+  stats: Record<string, number>;
 }
 
 type Dice = `${number}d${number}`;
@@ -48,12 +48,12 @@ const ANIMAL_TRAINER_GEAR = ["leather gauntlet, falcon","2 dogs, leashes","monke
 
 function expandGearTemplate(template: string): string {
   return template
-    .replace(/\{(\d+)d(\d+)\}/g, (_, count, sides) => String(roll(`${count}d${sides}` as Dice)))
-    .replace(/\{2\+1d4\*2\}/g, () => String(2 + roll("1d4") * 2))
-    .replace(/\{crop\}/g, () => CROPS[roll("1d10") - 1])
-    .replace(/\{instrument\}/g, () => INSTRUMENTS[roll("1d8") - 1])
-    .replace(/\{animal_trainer_gear\}/g, () => ANIMAL_TRAINER_GEAR[roll("1d4") - 1])
-    .replace(/\{poultry\}/g, () => {
+    .replaceAll(/\{(\d+)d(\d+)\}/g, (_, count, sides) => String(roll(`${count}d${sides}` as Dice)))
+    .replaceAll('{2+1d4*2}', () => String(2 + roll("1d4") * 2))
+    .replaceAll('{crop}', () => CROPS[roll("1d10") - 1])
+    .replaceAll('{instrument}', () => INSTRUMENTS[roll("1d8") - 1])
+    .replaceAll('{animal_trainer_gear}', () => ANIMAL_TRAINER_GEAR[roll("1d4") - 1])
+    .replaceAll('{poultry}', () => {
       const birds = [`${roll("1d6")} chickens`, `${roll("1d6")} ducks`, `${roll("1d4")} geese`, `${roll("1d4")} swans`];
       return birds[roll("1d4") - 1];
     });
@@ -69,15 +69,15 @@ function getOccupation(rollResult: number) {
     const [min, max] = parseRange(range);
     return rollResult >= min && rollResult <= max;
   })!;
-  return { name: row[1], gear: expandGearTemplate(row[2]), species: (row[3] as Species) || "Human" };
+  return { gear: expandGearTemplate(row[2]), name: row[1], species: (row[3] as Species) || "Human" };
 }
 
 function getName(species: Species): string {
   const r = roll("1d20") - 1;
   const row = (nameRows as string[][])[r];
   switch (species) {
-    case "Elf": return row[4];
     case "Dwarf": return row[5];
+    case "Elf": return row[4];
     case "Halfling": return row[6];
     default: return row[roll("1d3")];
   }
@@ -116,25 +116,25 @@ function getHeritageMoves(species: Species): string[] {
 
 export function generateVillager(): Villager {
   const stats: Record<string, number> = {
-    STR: roll("3d6"), DEX: roll("3d6"), CON: roll("3d6"),
-    INT: roll("3d6"), WIS: roll("3d6"), CHA: roll("3d6"), LUC: roll("3d6"),
+    CHA: roll("3d6"), CON: roll("3d6"), DEX: roll("3d6"),
+    INT: roll("3d6"), LUC: roll("3d6"), STR: roll("3d6"), WIS: roll("3d6"),
   };
   const modifiers: Record<string, number> = {};
   for (const [k, v] of Object.entries(stats)) modifiers[k] = getMod(v);
 
   const occ = getOccupation(roll("1d100"));
   return {
-    name: getName(occ.species),
-    species: occ.species,
-    occupation: occ.name,
-    look: getLook(),
-    stats,
-    modifiers,
-    hp: modifiers.CON + 4,
-    load: modifiers.STR + 4,
+    bond: getBond(),
     damage: "d4",
     gear: [occ.gear],
-    bond: getBond(),
     heritageMoves: getHeritageMoves(occ.species),
+    hp: modifiers.CON + 4,
+    load: modifiers.STR + 4,
+    look: getLook(),
+    modifiers,
+    name: getName(occ.species),
+    occupation: occ.name,
+    species: occ.species,
+    stats,
   };
 }

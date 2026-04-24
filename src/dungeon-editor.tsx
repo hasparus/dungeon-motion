@@ -26,6 +26,7 @@ function plainTextToHtml(text: string) {
 }
 
 const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
+const BLOCK_TAGS = new Set(["H1", "H2", "OL", "P", "UL"]);
 const DROPPED_TAGS = new Set(["IFRAME", "OBJECT", "SCRIPT", "STYLE"]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
@@ -398,18 +399,65 @@ export function DungeonEditor() {
             const range = selection.getRangeAt(0);
             range.deleteContents();
 
-            const fragment = document.createElement("template");
-            fragment.innerHTML = cleanHtml;
-            const content = fragment.content;
-            const lastNode = content.lastChild;
-            range.insertNode(content);
-            if (lastNode) {
-              range.setStartAfter(lastNode);
-              range.collapse(true);
-              selection.removeAllRanges();
-              selection.addRange(range);
+            const template = document.createElement("template");
+            template.innerHTML = cleanHtml;
+            const content = template.content;
+            const hasBlockChild = [...content.childNodes].some(
+              (n) => n instanceof Element && BLOCK_TAGS.has(n.tagName),
+            );
+
+            if (!hasBlockChild) {
+              const lastNode = content.lastChild;
+              range.insertNode(content);
+              if (lastNode) {
+                range.setStartAfter(lastNode);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+              save(editor);
+              return;
             }
 
+            // Block-level paste: split the current block at the caret and
+            // thread the pasted blocks between the halves to avoid invalid
+            // nesting (e.g. <p>...<h1>...</h1>...</p>).
+            const currentBlock = getCurrentBlock(editor);
+            if (!currentBlock) {
+              editor.append(content);
+              save(editor);
+              return;
+            }
+
+            const tailRange = document.createRange();
+            tailRange.setStart(range.endContainer, range.endOffset);
+            tailRange.setEndAfter(currentBlock.lastChild ?? currentBlock);
+            const tail = tailRange.extractContents();
+
+            let previous: ChildNode = currentBlock;
+            // Snapshot: previous.after(node) moves node out of content,
+            // mutating the live childNodes list.
+            // eslint-disable-next-line unicorn/no-useless-spread
+            for (const node of [...content.childNodes]) {
+              if (node instanceof Element && BLOCK_TAGS.has(node.tagName)) {
+                previous.after(node);
+                previous = node;
+              } else {
+                // Top-level inline/text among blocks: wrap in a paragraph.
+                const wrapper = document.createElement("p");
+                wrapper.append(node);
+                previous.after(wrapper);
+                previous = wrapper;
+              }
+            }
+
+            if (tail.childNodes.length > 0) {
+              const tailBlock = document.createElement("p");
+              tailBlock.append(tail);
+              previous.after(tailBlock);
+            }
+
+            if (previous instanceof HTMLElement) placeCaretAtEnd(previous);
             save(editor);
           }}
           ref={editorRef}

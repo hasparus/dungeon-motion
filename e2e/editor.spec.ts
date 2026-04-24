@@ -299,6 +299,27 @@ test.describe('/editor — security: paste sanitization', () => {
     await expect(editor.locator('img,script,iframe,style')).toHaveCount(0);
   });
 
+  test('paste with block elements splits current paragraph', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('start middle end');
+    // Move caret to between "middle" and " end"
+    for (const _ of ' end') {
+      await page.keyboard.press('ArrowLeft');
+    }
+
+    await simulateHtmlPaste(editor, '<h1>Injected</h1><p>body text</p>');
+
+    // Heading must exist and must NOT be nested inside a paragraph.
+    await expect(editor.getByRole('heading', { level: 1, name: 'Injected' })).toBeVisible();
+    await expect(editor.locator('p h1, p h2')).toHaveCount(0);
+    // Body paragraph from paste.
+    await expect(editor.locator('p', { hasText: 'body text' })).toBeVisible();
+    // Tail after the original split is still present.
+    await expect(editor).toContainText(' end');
+  });
+
   test('plain text paste preserves line breaks', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);

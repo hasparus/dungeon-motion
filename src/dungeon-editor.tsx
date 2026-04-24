@@ -318,29 +318,20 @@ function handleEnter(root: HTMLElement) {
 
 export function DungeonEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
-  const [spellcheck, setSpellcheck] = useState(true);
+  const [spellcheck, setSpellcheck] = useState(() => {
+    const saved = localStorage.getItem(SPELLCHECK_KEY);
+    return saved === null ? true : saved === "true";
+  });
 
   useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
 
     editor.innerHTML = sanitizeHtml(localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML);
-
-    const savedSpellcheck = localStorage.getItem(SPELLCHECK_KEY);
-    if (savedSpellcheck !== null) {
-      setSpellcheck(savedSpellcheck === "true");
-    }
   }, []);
 
   useEffect(() => {
     localStorage.setItem(SPELLCHECK_KEY, String(spellcheck));
-
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    editor.spellcheck = spellcheck;
-    editor.setAttribute("spellcheck", String(spellcheck));
-    editor.setAttribute("autocorrect", spellcheck ? "on" : "off");
   }, [spellcheck]);
 
   return (
@@ -348,6 +339,8 @@ export function DungeonEditor() {
       <div className="mx-auto max-w-3xl px-4 py-5 md:px-6 md:py-8 print:max-w-none print:px-0 print:py-0">
         <div
           aria-label="Editor"
+          autoCapitalize={spellcheck ? "sentences" : "off"}
+          autoCorrect={spellcheck ? "on" : "off"}
           className="min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] text-stone-900 dark:text-stone-100 print:min-h-0 print:text-black
             [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:font-serif [&_h1]:text-[2.2rem] [&_h1]:leading-[0.95] [&_h1]:tracking-[0.02em]
             [&_h2]:mt-16 [&_h2]:mb-3 [&_h2]:font-serif [&_h2]:text-[1.5rem] [&_h2]:leading-[1.05] [&_h2]:tracking-[0.04em]

@@ -287,6 +287,20 @@ test.describe('/editor — security: paste sanitization', () => {
 });
 
 test.describe('/editor — Enter semantics', () => {
+  test('Enter preserves inline formatting when converting a heading', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('# hello **world**');
+    // Inline transform wraps ** in <strong> before Enter is pressed.
+    await expect(editor.locator('strong')).toHaveText('world');
+
+    await page.keyboard.press('Enter');
+
+    await expect(editor.locator('h1')).toBeVisible();
+    await expect(editor.locator('h1 strong')).toHaveText('world');
+  });
+
   test('mid-paragraph Enter on heading marker preserves text after caret', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);

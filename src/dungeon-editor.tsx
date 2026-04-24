@@ -109,24 +109,47 @@ function placeCaretAtStart(element: HTMLElement) {
   selection.addRange(range);
 }
 
-function getCaretOffsetInBlock(block: HTMLElement): number {
-  const selection = globalThis.getSelection();
-  if (!selection || selection.rangeCount === 0) return block.textContent?.length ?? 0;
-  const range = selection.getRangeAt(0);
-  if (!block.contains(range.endContainer)) return block.textContent?.length ?? 0;
-  const preRange = document.createRange();
-  preRange.selectNodeContents(block);
-  preRange.setEnd(range.endContainer, range.endOffset);
-  return preRange.toString().length;
+function findPrefixTextNode(block: HTMLElement, prefix: string): Text | null {
+  // The markdown prefix lives at the start of the first text node that
+  // carries it. Skip over noise like a leading <br> placeholder.
+  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    if (node instanceof Text && node.data.startsWith(prefix)) return node;
+    node = walker.nextNode();
+  }
+  return null;
 }
 
-function splitAtCaret(block: HTMLElement, prefixLength: number) {
-  const raw = block.textContent ?? "";
-  const offset = Math.max(getCaretOffsetInBlock(block), prefixLength);
-  return {
-    after: normalizeEditableText(raw.slice(offset)),
-    before: normalizeEditableText(raw.slice(prefixLength, offset)),
-  };
+function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragment {
+  const prefixNode = findPrefixTextNode(block, prefix);
+  const selection = globalThis.getSelection();
+
+  const range = document.createRange();
+  if (prefixNode) range.setStart(prefixNode, prefix.length);
+  else range.setStart(block, 0);
+
+  if (selection && selection.rangeCount > 0 && block.contains(selection.anchorNode)) {
+    const caret = selection.getRangeAt(0);
+    range.setEnd(caret.endContainer, caret.endOffset);
+  } else {
+    range.setEndAfter(block.lastChild ?? block);
+  }
+
+  const fragment = range.extractContents();
+
+  // Prefix chars remain in the block's text node (range started past them);
+  // strip them now so the block only holds post-caret content.
+  if (prefixNode) {
+    prefixNode.data = prefixNode.data.slice(prefix.length);
+    if (!prefixNode.data) prefixNode.remove();
+  }
+
+  return fragment;
+}
+
+function moveChildrenInto(source: Node, target: Node) {
+  while (source.firstChild) target.append(source.firstChild);
 }
 
 function save(root: HTMLElement) {
@@ -248,43 +271,38 @@ function handleEnter(root: HTMLElement) {
 
   const rawText = normalizeEditableText(block.textContent ?? "");
 
-  if (block.tagName === "P" && rawText.startsWith("## ")) {
-    const { after, before } = splitAtCaret(block, 3);
-    const heading = document.createElement("h2");
-    heading.innerHTML = formatInline(before);
-    const paragraph = document.createElement("p");
-    paragraph.innerHTML = after ? formatInline(after) : "<br>";
-    block.replaceWith(heading);
-    heading.after(paragraph);
-    if (after) placeCaretAtStart(paragraph);
-    else placeCaretAtEnd(paragraph);
-    return true;
-  }
+  if (block.tagName === "P" && (rawText.startsWith("## ") || rawText.startsWith("# "))) {
+    const prefix = rawText.startsWith("## ") ? "## " : "# ";
+    const tag = prefix === "## " ? "h2" : "h1";
+    const heading = document.createElement(tag);
+    heading.append(extractBeforeCaret(block, prefix));
 
-  if (block.tagName === "P" && rawText.startsWith("# ")) {
-    const { after, before } = splitAtCaret(block, 2);
-    const heading = document.createElement("h1");
-    heading.innerHTML = formatInline(before);
     const paragraph = document.createElement("p");
-    paragraph.innerHTML = after ? formatInline(after) : "<br>";
+    const hasAfter = block.hasChildNodes();
+    if (hasAfter) moveChildrenInto(block, paragraph);
+    else paragraph.innerHTML = "<br>";
+
     block.replaceWith(heading);
     heading.after(paragraph);
-    if (after) placeCaretAtStart(paragraph);
+    if (hasAfter) placeCaretAtStart(paragraph);
     else placeCaretAtEnd(paragraph);
     return true;
   }
 
   if (block.tagName === "P" && /^[-*+]\s/.test(rawText)) {
-    const { after, before } = splitAtCaret(block, 2);
-    const list = document.createElement("ul");
     const item = document.createElement("li");
-    item.innerHTML = formatInline(before);
+    item.append(extractBeforeCaret(block, rawText.slice(0, 2)));
+    const list = document.createElement("ul");
     list.append(item);
+
     const paragraph = document.createElement("p");
-    paragraph.innerHTML = after ? formatInline(after) : "<br>";
+    const hasAfter = block.hasChildNodes();
+    if (hasAfter) moveChildrenInto(block, paragraph);
+    else paragraph.innerHTML = "<br>";
+
     block.replaceWith(list);
     list.after(paragraph);
-    if (after) placeCaretAtStart(paragraph);
+    if (hasAfter) placeCaretAtStart(paragraph);
     else placeCaretAtEnd(paragraph);
     return true;
   }

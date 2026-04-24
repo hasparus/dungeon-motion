@@ -338,13 +338,6 @@ export function DungeonEditor() {
     editor.spellcheck = spellcheck;
     editor.setAttribute("spellcheck", String(spellcheck));
     editor.setAttribute("autocorrect", spellcheck ? "on" : "off");
-
-    if (document.activeElement === editor) {
-      editor.blur();
-      globalThis.requestAnimationFrame(() => {
-        editor.focus();
-      });
-    }
   }, [spellcheck]);
 
   return (

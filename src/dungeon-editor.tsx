@@ -27,7 +27,10 @@ function plainTextToHtml(text: string) {
 
 const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
 const BLOCK_TAGS = new Set(["H1", "H2", "OL", "P", "UL"]);
-const DROPPED_TAGS = new Set(["IFRAME", "OBJECT", "SCRIPT", "STYLE"]);
+// Dropped entirely — subtree is discarded. Includes foreign-namespace
+// containers (SVG, MATH) whose descendants have lowercase tagNames and
+// can smuggle executable-looking elements past an uppercase-only check.
+const DROPPED_TAGS = new Set(["IFRAME", "MATH", "OBJECT", "SCRIPT", "STYLE", "SVG"]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
 function sanitizeInto(source: ParentNode, target: ParentNode) {
@@ -38,7 +41,10 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
     }
     if (!(child instanceof Element)) continue;
 
-    const tag = TAG_RENAME[child.tagName] ?? child.tagName;
+    // Normalise: SVG/MathML elements keep case-preserved tagNames
+    // (lowercase), HTML elements are uppercase. Compare in one case.
+    const rawTag = child.tagName.toUpperCase();
+    const tag = TAG_RENAME[rawTag] ?? rawTag;
 
     if (DROPPED_TAGS.has(tag)) continue;
 
@@ -421,7 +427,10 @@ export function DungeonEditor() {
 
             // Block-level paste: split the current block at the caret and
             // thread the pasted blocks between the halves to avoid invalid
-            // nesting (e.g. <p>...<h1>...</h1>...</p>).
+            // nesting (e.g. <p>...<h1>...</h1>...</p>). When the caret is
+            // inside a list item, splitting would produce <ul><li>..</li>
+            // <h1>..</h1>..</ul> — invalid. In that case, insert after the
+            // enclosing list and leave the item intact.
             const currentBlock = getCurrentBlock(editor);
             if (!currentBlock) {
               editor.append(content);
@@ -429,12 +438,19 @@ export function DungeonEditor() {
               return;
             }
 
-            const tailRange = document.createRange();
-            tailRange.setStart(range.endContainer, range.endOffset);
-            tailRange.setEndAfter(currentBlock.lastChild ?? currentBlock);
-            const tail = tailRange.extractContents();
+            const list = currentBlock.closest("ul, ol");
+            const insertAfter = currentBlock.tagName === "LI" && list ? list : currentBlock;
+            const shouldSplitTail = insertAfter === currentBlock;
 
-            let previous: ChildNode = currentBlock;
+            let tail: DocumentFragment | null = null;
+            if (shouldSplitTail) {
+              const tailRange = document.createRange();
+              tailRange.setStart(range.endContainer, range.endOffset);
+              tailRange.setEndAfter(currentBlock.lastChild ?? currentBlock);
+              tail = tailRange.extractContents();
+            }
+
+            let previous: ChildNode = insertAfter;
             // Snapshot: previous.after(node) moves node out of content,
             // mutating the live childNodes list.
             // eslint-disable-next-line unicorn/no-useless-spread
@@ -451,7 +467,7 @@ export function DungeonEditor() {
               }
             }
 
-            if (tail.childNodes.length > 0) {
+            if (tail && tail.childNodes.length > 0) {
               const tailBlock = document.createElement("p");
               tailBlock.append(tail);
               previous.after(tailBlock);

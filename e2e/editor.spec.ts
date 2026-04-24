@@ -320,6 +320,41 @@ test.describe('/editor — security: paste sanitization', () => {
     await expect(editor).toContainText(' end');
   });
 
+  test('paste with block elements into a list item inserts after the list (not inside)', async ({ page }) => {
+    await seedDocument(page, '<p>before</p><ul><li>alpha</li><li>beta</li></ul><p>after</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await editor.locator('li').first().click();
+
+    await simulateHtmlPaste(editor, '<h1>Injected</h1>');
+
+    // Heading must NOT be inside any list.
+    await expect(editor.locator('ul h1, ol h1')).toHaveCount(0);
+    await expect(editor.getByRole('heading', { level: 1, name: 'Injected' })).toBeVisible();
+    // Both list items preserved.
+    await expect(editor.locator('ul li')).toHaveCount(2);
+  });
+
+  test('sanitizer removes <script> nested inside <svg>', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p>before<svg><script>globalThis.__xss = true</script></svg>after</p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText(/before/);
+    await expect(editor).toContainText(/after/);
+    // Neither the <svg>/<script> elements nor the script *source text*
+    // should end up in the document.
+    await expect(editor.locator('svg, script')).toHaveCount(0);
+    await expect(editor).not.toContainText('globalThis.__xss');
+    expect(await page.evaluate(() => (globalThis as unknown as { __xss: boolean }).__xss)).toBe(false);
+  });
+
   test('plain text paste preserves line breaks', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
@@ -336,6 +371,26 @@ test.describe('/editor — security: paste sanitization', () => {
 });
 
 test.describe('/editor — Enter semantics', () => {
+  test('Enter does not destroy content when caret is before the markdown prefix', async ({ page }) => {
+    // Caret inside <strong>, whose text is BEFORE the "# head" text node.
+    // Heading conversion must not run (caret is before the prefix), and
+    // the original content must be preserved.
+    await seedDocument(page, '<p><strong>bold</strong># head</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await editor.locator('strong').click();
+
+    await page.keyboard.press('Enter');
+
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText('bold');
+    await expect(editor).toContainText('head');
+    // "# " must not have been silently deleted.
+    await expect(editor).toContainText('#');
+  });
+
   test('Enter preserves inline formatting when converting a heading', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);

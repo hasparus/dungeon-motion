@@ -71,6 +71,7 @@ function normalizeEditableText(text: string) {
 function getCurrentBlock(root: HTMLElement) {
   const selection = globalThis.getSelection();
   if (!selection || selection.rangeCount === 0) return null;
+  if (!root.contains(selection.anchorNode)) return null;
 
   let node: Node | null = selection.anchorNode;
   while (node && node !== root) {
@@ -78,15 +79,6 @@ function getCurrentBlock(root: HTMLElement) {
       return node;
     }
     node = node.parentNode;
-  }
-
-  const fallback = root.lastElementChild;
-  if (!(fallback instanceof HTMLElement)) return null;
-  if (["H1", "H2", "LI", "P"].includes(fallback.tagName)) return fallback;
-
-  if (fallback.tagName === "UL" || fallback.tagName === "OL") {
-    const item = fallback.lastElementChild;
-    if (item instanceof HTMLElement && item.tagName === "LI") return item;
   }
 
   return null;
@@ -191,7 +183,9 @@ function transformInlineTextNodes(node: Node): boolean {
   if (node.dataset.caretMarker === "true") return false;
   if (node.tagName === "STRONG" || node.tagName === "I") return false;
 
-  for (const child of node.childNodes) {
+  // Snapshot: recursion may replaceWith() on children and mutate the live list.
+  // eslint-disable-next-line unicorn/no-useless-spread
+  for (const child of [...node.childNodes]) {
     changed = transformInlineTextNodes(child) || changed;
   }
 
@@ -201,7 +195,9 @@ function transformInlineTextNodes(node: Node): boolean {
 function absorbTrailingPunctuation(block: HTMLElement) {
   let changed = false;
 
-  for (const child of block.childNodes) {
+  // Snapshot: body mutates siblings (appends to child, rewrites next text node).
+  // eslint-disable-next-line unicorn/no-useless-spread
+  for (const child of [...block.childNodes]) {
     if (!(child instanceof HTMLElement)) continue;
     if (child.tagName !== "STRONG" && child.tagName !== "I") continue;
 

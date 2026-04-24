@@ -17,7 +17,8 @@ function escapeHtml(text: string) {
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }
 
 const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
@@ -58,6 +59,8 @@ function sanitizeHtml(html: string): string {
   return clean.innerHTML;
 }
 
+// Deliberately lossy. `**foo * bar**` won't match (lone `*` inside kills it)
+// and `foo_bar_baz` will italicize mid-word. Full Commonmark is out of scope.
 function formatInline(text: string) {
   return escapeHtml(text)
     .replaceAll(/\*\*([^*]+)\*\*([.,!?])?/g, "<strong>$1$2</strong>")

@@ -21,6 +21,10 @@ function escapeHtml(text: string) {
     .replaceAll("'", "&#39;");
 }
 
+function plainTextToHtml(text: string) {
+  return escapeHtml(text.replaceAll(/\r\n?/g, "\n")).replaceAll("\n", "<br>");
+}
+
 const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
 const DROPPED_TAGS = new Set(["IFRAME", "OBJECT", "SCRIPT", "STYLE"]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
@@ -148,7 +152,7 @@ function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragmen
   return fragment;
 }
 
-function moveChildrenInto(source: Node, target: Node) {
+function moveChildrenInto(source: ParentNode, target: ParentNode) {
   while (source.firstChild) target.append(source.firstChild);
 }
 
@@ -386,7 +390,7 @@ export function DungeonEditor() {
             event.preventDefault();
             const html = event.clipboardData.getData("text/html");
             const text = event.clipboardData.getData("text/plain");
-            const cleanHtml = html ? sanitizeHtml(html) : escapeHtml(text);
+            const cleanHtml = html ? sanitizeHtml(html) : plainTextToHtml(text);
 
             const selection = globalThis.getSelection();
             if (!selection || selection.rangeCount === 0 || !editor.contains(selection.anchorNode)) return;

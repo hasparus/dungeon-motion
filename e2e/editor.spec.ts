@@ -50,6 +50,20 @@ async function simulateHtmlPaste(editor: ReturnType<Page['locator']>, html: stri
   }, html);
 }
 
+// Plain text paste: only text/plain set on the clipboard — no text/html.
+async function simulatePlainPaste(editor: ReturnType<Page['locator']>, text: string) {
+  await editor.evaluate((el, payload) => {
+    const dt = new DataTransfer();
+    dt.setData('text/plain', payload);
+    const event = new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: dt,
+    });
+    el.dispatchEvent(event);
+  }, text);
+}
+
 test.describe('/editor', () => {
   test('converts markdown heading and list triggers on Enter', async ({ page }) => {
     const stamp = Date.now();
@@ -283,6 +297,20 @@ test.describe('/editor — security: paste sanitization', () => {
 
     await expect(editor).toContainText('plain paste content');
     await expect(editor.locator('img,script,iframe,style')).toHaveCount(0);
+  });
+
+  test('plain text paste preserves line breaks', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await simulatePlainPaste(editor, 'line one\nline two\nline three');
+
+    await expect(editor).toContainText('line one');
+    await expect(editor).toContainText('line two');
+    await expect(editor).toContainText('line three');
+    // Two <br> separators for three lines.
+    const brCount = await editor.evaluate((el) => el.querySelectorAll('br').length);
+    expect(brCount).toBeGreaterThanOrEqual(2);
   });
 });
 

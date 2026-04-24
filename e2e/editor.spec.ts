@@ -221,7 +221,7 @@ test.describe('/editor — security: localStorage sanitization', () => {
   test('preserves allowlisted tags across reload', async ({ page }) => {
     await seedDocument(
       page,
-      '<h1>Title</h1><p>Text with <strong>bold</strong> and <i>italic</i>.</p><ul><li>item</li></ul>',
+      '<h1>Title</h1><p>Text with <strong>bold</strong> and <i>italic</i>.</p><ul><li>bullet</li></ul><ol><li>numbered</li></ol>',
     );
     await page.goto('/editor');
 
@@ -229,7 +229,8 @@ test.describe('/editor — security: localStorage sanitization', () => {
     await expect(editor.getByRole('heading', { level: 1, name: 'Title' })).toBeVisible();
     await expect(editor.locator('strong')).toHaveText('bold');
     await expect(editor.locator('i')).toHaveText('italic');
-    await expect(editor.getByRole('listitem')).toHaveText('item');
+    await expect(editor.locator('ul > li')).toHaveText('bullet');
+    await expect(editor.locator('ol > li')).toHaveText('numbered');
   });
 });
 

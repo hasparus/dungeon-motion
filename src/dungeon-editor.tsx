@@ -20,7 +20,7 @@ function escapeHtml(text: string) {
     .replaceAll('"', "&quot;");
 }
 
-const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "P", "STRONG", "UL"]);
+const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
 const DROPPED_TAGS = new Set(["IFRAME", "OBJECT", "SCRIPT", "STYLE"]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
@@ -218,7 +218,7 @@ function absorbTrailingPunctuation(block: HTMLElement) {
 
 function applyInlineTransform(root: HTMLElement) {
   const block = getCurrentBlock(root);
-  if (!block || block.tagName === "LI" && block.closest("ul") === null) return;
+  if (!block || block.tagName === "LI" && block.closest("ul, ol") === null) return;
 
   const raw = normalizeEditableText(block.textContent ?? "");
   let changed = false;

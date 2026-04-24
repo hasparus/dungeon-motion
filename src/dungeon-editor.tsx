@@ -103,6 +103,37 @@ function placeCaretAtEnd(element: HTMLElement) {
   selection.addRange(range);
 }
 
+function placeCaretAtStart(element: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function getCaretOffsetInBlock(block: HTMLElement): number {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return block.textContent?.length ?? 0;
+  const range = selection.getRangeAt(0);
+  if (!block.contains(range.endContainer)) return block.textContent?.length ?? 0;
+  const preRange = document.createRange();
+  preRange.selectNodeContents(block);
+  preRange.setEnd(range.endContainer, range.endOffset);
+  return preRange.toString().length;
+}
+
+function splitAtCaret(block: HTMLElement, prefixLength: number) {
+  const raw = block.textContent ?? "";
+  const offset = Math.max(getCaretOffsetInBlock(block), prefixLength);
+  return {
+    after: normalizeEditableText(raw.slice(offset)),
+    before: normalizeEditableText(raw.slice(prefixLength, offset)),
+  };
+}
+
 function save(root: HTMLElement) {
   localStorage.setItem(STORAGE_KEY, root.innerHTML.replaceAll("\u200B", ""));
 }
@@ -219,37 +250,43 @@ function handleEnter(root: HTMLElement) {
   const rawText = normalizeEditableText(block.textContent ?? "");
 
   if (block.tagName === "P" && rawText.startsWith("## ")) {
+    const { after, before } = splitAtCaret(block, 3);
     const heading = document.createElement("h2");
-    heading.innerHTML = formatInline(rawText.slice(3));
+    heading.innerHTML = formatInline(before);
     const paragraph = document.createElement("p");
-    paragraph.innerHTML = "<br>";
+    paragraph.innerHTML = after ? formatInline(after) : "<br>";
     block.replaceWith(heading);
     heading.after(paragraph);
-    placeCaretAtEnd(paragraph);
+    if (after) placeCaretAtStart(paragraph);
+    else placeCaretAtEnd(paragraph);
     return true;
   }
 
   if (block.tagName === "P" && rawText.startsWith("# ")) {
+    const { after, before } = splitAtCaret(block, 2);
     const heading = document.createElement("h1");
-    heading.innerHTML = formatInline(rawText.slice(2));
+    heading.innerHTML = formatInline(before);
     const paragraph = document.createElement("p");
-    paragraph.innerHTML = "<br>";
+    paragraph.innerHTML = after ? formatInline(after) : "<br>";
     block.replaceWith(heading);
     heading.after(paragraph);
-    placeCaretAtEnd(paragraph);
+    if (after) placeCaretAtStart(paragraph);
+    else placeCaretAtEnd(paragraph);
     return true;
   }
 
   if (block.tagName === "P" && /^[-*+]\s/.test(rawText)) {
+    const { after, before } = splitAtCaret(block, 2);
     const list = document.createElement("ul");
     const item = document.createElement("li");
-    item.innerHTML = formatInline(rawText.slice(2));
+    item.innerHTML = formatInline(before);
     list.append(item);
     const paragraph = document.createElement("p");
-    paragraph.innerHTML = "<br>";
+    paragraph.innerHTML = after ? formatInline(after) : "<br>";
     block.replaceWith(list);
     list.after(paragraph);
-    placeCaretAtEnd(paragraph);
+    if (after) placeCaretAtStart(paragraph);
+    else placeCaretAtEnd(paragraph);
     return true;
   }
 

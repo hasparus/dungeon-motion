@@ -20,6 +20,44 @@ function escapeHtml(text: string) {
     .replaceAll('"', "&quot;");
 }
 
+const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "P", "STRONG", "UL"]);
+const DROPPED_TAGS = new Set(["IFRAME", "OBJECT", "SCRIPT", "STYLE"]);
+const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
+
+function sanitizeInto(source: ParentNode, target: ParentNode) {
+  for (const child of source.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      target.append(child.cloneNode(false));
+      continue;
+    }
+    if (!(child instanceof Element)) continue;
+
+    const tag = TAG_RENAME[child.tagName] ?? child.tagName;
+
+    if (DROPPED_TAGS.has(tag)) continue;
+
+    if (ALLOWED_TAGS.has(tag)) {
+      const el = document.createElement(tag.toLowerCase());
+      target.append(el);
+      sanitizeInto(child, el);
+      continue;
+    }
+
+    // Disallowed wrapper: flatten — keep descendant content, drop the tag.
+    sanitizeInto(child, target);
+  }
+}
+
+function sanitizeHtml(html: string): string {
+  // <template> content is an inert DocumentFragment — scripts don't run,
+  // images don't fetch, event handlers don't fire during parse.
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const clean = document.createElement("div");
+  sanitizeInto(template.content, clean);
+  return clean.innerHTML;
+}
+
 function formatInline(text: string) {
   return escapeHtml(text)
     .replaceAll(/\*\*([^*]+)\*\*([.,!?])?/g, "<strong>$1$2</strong>")
@@ -250,7 +288,7 @@ export function DungeonEditor() {
     const editor = editorRef.current;
     if (!editor) return;
 
-    editor.innerHTML = localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML;
+    editor.innerHTML = sanitizeHtml(localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML);
 
     const savedSpellcheck = localStorage.getItem(SPELLCHECK_KEY);
     if (savedSpellcheck !== null) {
@@ -342,6 +380,35 @@ export function DungeonEditor() {
             if (!editor) return;
 
             applyInlineTransform(editor);
+            save(editor);
+          }}
+          onPaste={(event) => {
+            const editor = editorRef.current;
+            if (!editor) return;
+
+            event.preventDefault();
+            const html = event.clipboardData.getData("text/html");
+            const text = event.clipboardData.getData("text/plain");
+            const cleanHtml = html ? sanitizeHtml(html) : escapeHtml(text);
+
+            const selection = globalThis.getSelection();
+            if (!selection || selection.rangeCount === 0 || !editor.contains(selection.anchorNode)) return;
+
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+
+            const fragment = document.createElement("template");
+            fragment.innerHTML = cleanHtml;
+            const content = fragment.content;
+            const lastNode = content.lastChild;
+            range.insertNode(content);
+            if (lastNode) {
+              range.setStartAfter(lastNode);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+            }
+
             save(editor);
           }}
           ref={editorRef}

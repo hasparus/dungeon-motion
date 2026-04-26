@@ -1,0 +1,499 @@
+import { useEffect, useRef, useState } from "react";
+
+const STORAGE_KEY = "dungeon-motion-editor-document-v3";
+const SPELLCHECK_KEY = "dungeon-motion-editor-spellcheck";
+
+const DEFAULT_HTML = [
+  "<h1>Untitled Expedition</h1>",
+  "<p>Start here. Sketch the village, the threat, the omen, the opening scene.</p>",
+  "<h2>What everyone knows</h2>",
+  "<p>The road is bad. The weather is worse. Something in the hills has started answering back.</p>",
+  "<ul><li>A witness saw torchlight where no one lives.</li><li>The chapel bell rang after midnight.</li><li>No one wants to say the old name out loud.</li></ul>",
+  "<p>Use <strong>bold</strong> for pressure and <em>italics</em> for whispers.</p>",
+].join("");
+
+function escapeHtml(text: string) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function plainTextToHtml(text: string) {
+  return escapeHtml(text.replaceAll(/\r\n?/g, "\n")).replaceAll("\n", "<br>");
+}
+
+const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
+const BLOCK_TAGS = new Set(["H1", "H2", "OL", "P", "UL"]);
+// Dropped entirely — subtree is discarded. Includes foreign-namespace
+// containers (SVG, MATH) whose descendants have lowercase tagNames and
+// can smuggle executable-looking elements past an uppercase-only check.
+const DROPPED_TAGS = new Set(["IFRAME", "MATH", "OBJECT", "SCRIPT", "STYLE", "SVG"]);
+const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
+
+function sanitizeInto(source: ParentNode, target: ParentNode) {
+  for (const child of source.childNodes) {
+    if (child.nodeType === Node.TEXT_NODE) {
+      target.append(child.cloneNode(false));
+      continue;
+    }
+    if (!(child instanceof Element)) continue;
+
+    // Normalise: SVG/MathML elements keep case-preserved tagNames
+    // (lowercase), HTML elements are uppercase. Compare in one case.
+    const rawTag = child.tagName.toUpperCase();
+    const tag = TAG_RENAME[rawTag] ?? rawTag;
+
+    if (DROPPED_TAGS.has(tag)) continue;
+
+    if (ALLOWED_TAGS.has(tag)) {
+      const el = document.createElement(tag.toLowerCase());
+      target.append(el);
+      sanitizeInto(child, el);
+      continue;
+    }
+
+    // Disallowed wrapper: flatten — keep descendant content, drop the tag.
+    sanitizeInto(child, target);
+  }
+}
+
+function sanitizeHtml(html: string): string {
+  // <template> content is an inert DocumentFragment — scripts don't run,
+  // images don't fetch, event handlers don't fire during parse.
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  const clean = document.createElement("div");
+  sanitizeInto(template.content, clean);
+  return clean.innerHTML;
+}
+
+// Deliberately lossy. `**foo * bar**` won't match (lone `*` inside kills it)
+// and `foo_bar_baz` will italicize mid-word. Full Commonmark is out of scope.
+function formatInline(text: string) {
+  return escapeHtml(text)
+    .replaceAll(/\*\*([^*]+)\*\*([.,!?])?/g, "<strong>$1$2</strong>")
+    .replaceAll(/_([^_]+)_([.,!?])?/g, "<i>$1$2</i>");
+}
+
+function normalizeEditableText(text: string) {
+  return text.replaceAll("\u200B", "").replaceAll("\u00A0", " ");
+}
+
+function getCurrentBlock(root: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  if (!root.contains(selection.anchorNode)) return null;
+
+  let node: Node | null = selection.anchorNode;
+  while (node && node !== root) {
+    if (node instanceof HTMLElement && ["H1", "H2", "LI", "P"].includes(node.tagName)) {
+      return node;
+    }
+    node = node.parentNode;
+  }
+
+  return null;
+}
+
+function placeCaretAtEnd(element: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function placeCaretAtStart(element: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function findPrefixTextNode(block: HTMLElement, prefix: string): Text | null {
+  // The markdown prefix lives at the start of the first text node that
+  // carries it. Skip over noise like a leading <br> placeholder.
+  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+  let node: Node | null = walker.nextNode();
+  while (node) {
+    if (node instanceof Text && node.data.startsWith(prefix)) return node;
+    node = walker.nextNode();
+  }
+  return null;
+}
+
+function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragment {
+  const prefixNode = findPrefixTextNode(block, prefix);
+  const selection = globalThis.getSelection();
+
+  const range = document.createRange();
+  if (prefixNode) range.setStart(prefixNode, prefix.length);
+  else range.setStart(block, 0);
+
+  if (selection && selection.rangeCount > 0 && block.contains(selection.anchorNode)) {
+    const caret = selection.getRangeAt(0);
+    range.setEnd(caret.endContainer, caret.endOffset);
+  } else {
+    range.setEndAfter(block.lastChild ?? block);
+  }
+
+  const fragment = range.extractContents();
+
+  // Prefix chars remain in the block's text node (range started past them);
+  // strip them now so the block only holds post-caret content.
+  if (prefixNode) {
+    prefixNode.data = prefixNode.data.slice(prefix.length);
+    if (!prefixNode.data) prefixNode.remove();
+  }
+
+  return fragment;
+}
+
+function moveChildrenInto(source: ParentNode, target: ParentNode) {
+  while (source.firstChild) target.append(source.firstChild);
+}
+
+function save(root: HTMLElement) {
+  localStorage.setItem(STORAGE_KEY, root.innerHTML.replaceAll("\u200B", ""));
+}
+
+function insertCaretMarker(root: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.startContainer)) return null;
+
+  const marker = document.createElement("span");
+  marker.dataset.caretMarker = "true";
+  marker.setAttribute("contenteditable", "false");
+  marker.textContent = "\u200B";
+  range.insertNode(marker);
+  return marker;
+}
+
+function restoreCaretFromMarker(marker: HTMLElement) {
+  const parent = marker.parentNode;
+  if (!(parent instanceof HTMLElement)) return;
+
+  const boundary = document.createTextNode("\u200B");
+
+  marker.replaceWith(boundary);
+
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.setStart(boundary, 1);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function transformInlineTextNodes(node: Node): boolean {
+  let changed = false;
+
+  if (node instanceof Text) {
+    const raw = normalizeEditableText(node.textContent ?? "");
+    if (!raw.includes("**") && !raw.includes("_")) return false;
+
+    const wrapper = document.createElement("span");
+    wrapper.innerHTML = formatInline(raw);
+
+    if (wrapper.textContent === raw && wrapper.children.length === 0) return false;
+
+    node.replaceWith(...wrapper.childNodes);
+    return true;
+  }
+
+  if (!(node instanceof HTMLElement)) return false;
+  if (node.dataset.caretMarker === "true") return false;
+  if (node.tagName === "STRONG" || node.tagName === "I") return false;
+
+  // Snapshot: recursion may replaceWith() on children and mutate the live list.
+  // eslint-disable-next-line unicorn/no-useless-spread
+  for (const child of [...node.childNodes]) {
+    changed = transformInlineTextNodes(child) || changed;
+  }
+
+  return changed;
+}
+
+function absorbTrailingPunctuation(block: HTMLElement) {
+  let changed = false;
+
+  // Snapshot: body mutates siblings (appends to child, rewrites next text node).
+  // eslint-disable-next-line unicorn/no-useless-spread
+  for (const child of [...block.childNodes]) {
+    if (!(child instanceof HTMLElement)) continue;
+    if (child.tagName !== "STRONG" && child.tagName !== "I") continue;
+
+    const next = child.nextSibling;
+    if (!(next instanceof Text)) continue;
+
+    const match = next.textContent?.match(/^(\u200B*)([.,!?])(.*)$/s);
+    if (!match) continue;
+
+    child.append(match[2]);
+    next.textContent = `${match[1]}${match[3]}`;
+    if (!next.textContent) next.remove();
+    changed = true;
+  }
+
+  return changed;
+}
+
+function applyInlineTransform(root: HTMLElement) {
+  const block = getCurrentBlock(root);
+  if (!block || block.tagName === "LI" && block.closest("ul, ol") === null) return;
+
+  const raw = normalizeEditableText(block.textContent ?? "");
+  let changed = false;
+
+  if (/\*\*[^*]+\*\*/.test(raw) || /_[^_]+_/.test(raw)) {
+    const marker = insertCaretMarker(root);
+    changed = transformInlineTextNodes(block);
+
+    if (marker && changed) {
+      restoreCaretFromMarker(marker);
+    } else {
+      marker?.remove();
+    }
+  }
+
+  if (absorbTrailingPunctuation(block)) {
+    placeCaretAtEnd(block);
+  }
+}
+
+function handleEnter(root: HTMLElement) {
+  const block = getCurrentBlock(root);
+  if (!block) return false;
+
+  const rawText = normalizeEditableText(block.textContent ?? "");
+
+  if (block.tagName === "P" && (rawText.startsWith("## ") || rawText.startsWith("# "))) {
+    const prefix = rawText.startsWith("## ") ? "## " : "# ";
+    const tag = prefix === "## " ? "h2" : "h1";
+    const heading = document.createElement(tag);
+    heading.append(extractBeforeCaret(block, prefix));
+
+    const paragraph = document.createElement("p");
+    const hasAfter = block.hasChildNodes();
+    if (hasAfter) moveChildrenInto(block, paragraph);
+    else paragraph.innerHTML = "<br>";
+
+    block.replaceWith(heading);
+    heading.after(paragraph);
+    if (hasAfter) placeCaretAtStart(paragraph);
+    else placeCaretAtEnd(paragraph);
+    return true;
+  }
+
+  if (block.tagName === "P" && /^[-*+]\s/.test(rawText)) {
+    const item = document.createElement("li");
+    item.append(extractBeforeCaret(block, rawText.slice(0, 2)));
+    const list = document.createElement("ul");
+    list.append(item);
+
+    const paragraph = document.createElement("p");
+    const hasAfter = block.hasChildNodes();
+    if (hasAfter) moveChildrenInto(block, paragraph);
+    else paragraph.innerHTML = "<br>";
+
+    block.replaceWith(list);
+    list.after(paragraph);
+    if (hasAfter) placeCaretAtStart(paragraph);
+    else placeCaretAtEnd(paragraph);
+    return true;
+  }
+
+  if (block.tagName === "LI") {
+    const text = rawText.trim();
+    if (text) return false;
+
+    const list = block.parentElement;
+    if (!list) return false;
+
+    const paragraph = document.createElement("p");
+    paragraph.innerHTML = "<br>";
+    list.after(paragraph);
+    block.remove();
+    if (list.children.length === 0) list.remove();
+    placeCaretAtEnd(paragraph);
+    return true;
+  }
+
+  if (block.tagName === "H1" || block.tagName === "H2") {
+    const paragraph = document.createElement("p");
+    paragraph.innerHTML = "<br>";
+    block.after(paragraph);
+    placeCaretAtEnd(paragraph);
+    return true;
+  }
+
+  return false;
+}
+
+export function DungeonEditor() {
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [spellcheck, setSpellcheck] = useState(() => {
+    const saved = localStorage.getItem(SPELLCHECK_KEY);
+    return saved === null ? true : saved === "true";
+  });
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.innerHTML = sanitizeHtml(localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SPELLCHECK_KEY, String(spellcheck));
+  }, [spellcheck]);
+
+  return (
+    <main className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+      <div className="mx-auto max-w-3xl px-4 py-5 md:px-6 md:py-8 print:max-w-none print:px-0 print:py-0">
+        <div
+          aria-label="Editor"
+          autoCapitalize={spellcheck ? "sentences" : "off"}
+          autoCorrect={spellcheck ? "on" : "off"}
+          className="min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] text-stone-900 dark:text-stone-100 print:min-h-0 print:text-black
+            [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:font-serif [&_h1]:text-[2.2rem] [&_h1]:leading-[0.95] [&_h1]:tracking-[0.02em]
+            [&_h2]:mt-16 [&_h2]:mb-3 [&_h2]:font-serif [&_h2]:text-[1.5rem] [&_h2]:leading-[1.05] [&_h2]:tracking-[0.04em]
+            [&_p]:my-0 [&_p+*]:mt-4 [&_ul]:my-4 [&_ul]:pl-6 [&_li]:my-1.5 [&_strong]:font-semibold [&_i]:italic"
+          contentEditable
+          onInput={() => {
+            const editor = editorRef.current;
+            if (!editor) return;
+            applyInlineTransform(editor);
+            save(editor);
+          }}
+          onKeyDown={(event) => {
+            const editor = editorRef.current;
+            if (!editor) return;
+
+            if (event.key === "Enter" && handleEnter(editor)) {
+              event.preventDefault();
+              save(editor);
+            }
+          }}
+          onPaste={(event) => {
+            const editor = editorRef.current;
+            if (!editor) return;
+
+            event.preventDefault();
+            const html = event.clipboardData.getData("text/html");
+            const text = event.clipboardData.getData("text/plain");
+            const cleanHtml = html ? sanitizeHtml(html) : plainTextToHtml(text);
+
+            const selection = globalThis.getSelection();
+            if (!selection || selection.rangeCount === 0 || !editor.contains(selection.anchorNode)) return;
+
+            const range = selection.getRangeAt(0);
+            range.deleteContents();
+
+            const template = document.createElement("template");
+            template.innerHTML = cleanHtml;
+            const content = template.content;
+            const hasBlockChild = [...content.childNodes].some(
+              (n) => n instanceof Element && BLOCK_TAGS.has(n.tagName),
+            );
+
+            if (!hasBlockChild) {
+              const lastNode = content.lastChild;
+              range.insertNode(content);
+              if (lastNode) {
+                range.setStartAfter(lastNode);
+                range.collapse(true);
+                selection.removeAllRanges();
+                selection.addRange(range);
+              }
+              save(editor);
+              return;
+            }
+
+            // Block-level paste: split the current block at the caret and
+            // thread the pasted blocks between the halves to avoid invalid
+            // nesting (e.g. <p>...<h1>...</h1>...</p>). When the caret is
+            // inside a list item, splitting would produce <ul><li>..</li>
+            // <h1>..</h1>..</ul> — invalid. In that case, insert after the
+            // enclosing list and leave the item intact.
+            const currentBlock = getCurrentBlock(editor);
+            if (!currentBlock) {
+              editor.append(content);
+              save(editor);
+              return;
+            }
+
+            const list = currentBlock.closest("ul, ol");
+            const insertAfter = currentBlock.tagName === "LI" && list ? list : currentBlock;
+            const shouldSplitTail = insertAfter === currentBlock;
+
+            let tail: DocumentFragment | null = null;
+            if (shouldSplitTail) {
+              const tailRange = document.createRange();
+              tailRange.setStart(range.endContainer, range.endOffset);
+              tailRange.setEndAfter(currentBlock.lastChild ?? currentBlock);
+              tail = tailRange.extractContents();
+            }
+
+            let previous: ChildNode = insertAfter;
+            // Snapshot: previous.after(node) moves node out of content,
+            // mutating the live childNodes list.
+            // eslint-disable-next-line unicorn/no-useless-spread
+            for (const node of [...content.childNodes]) {
+              if (node instanceof Element && BLOCK_TAGS.has(node.tagName)) {
+                previous.after(node);
+                previous = node;
+              } else {
+                // Top-level inline/text among blocks: wrap in a paragraph.
+                const wrapper = document.createElement("p");
+                wrapper.append(node);
+                previous.after(wrapper);
+                previous = wrapper;
+              }
+            }
+
+            if (tail && tail.childNodes.length > 0) {
+              const tailBlock = document.createElement("p");
+              tailBlock.append(tail);
+              previous.after(tailBlock);
+            }
+
+            if (previous instanceof HTMLElement) placeCaretAtEnd(previous);
+            save(editor);
+          }}
+          ref={editorRef}
+          role="textbox"
+          spellCheck={spellcheck}
+          style={{ fontFamily: '"Crimson Text", Georgia, serif' }}
+          suppressContentEditableWarning
+        />
+
+        <div className="mt-4 flex justify-end print:hidden">
+          <button
+            aria-label={spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"}
+            className="flex size-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
+            onClick={() => setSpellcheck((value) => !value)}
+            type="button"
+          >
+            <span aria-hidden="true" className="text-lg leading-none">{spellcheck ? "✓" : "✗"}</span>
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}

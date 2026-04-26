@@ -41,39 +41,39 @@ export interface PortraitCanvasHandle {
   hasStrokes: boolean;
 }
 
-type State = { strokes: InputPoint[][]; current: InputPoint[] | null };
+type State = { current: InputPoint[] | null; strokes: InputPoint[][]; };
 type Action =
-  | { type: "start"; point: InputPoint }
-  | { type: "move"; point: InputPoint }
-  | { type: "end" }
   | { type: "clear" }
-  | { type: "load"; strokes: InputPoint[][] };
+  | { type: "end" }
+  | { type: "load"; strokes: InputPoint[][] }
+  | { type: "move"; point: InputPoint }
+  | { type: "start"; point: InputPoint };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "start":
-      return {
-        strokes: state.current ? [...state.strokes, state.current] : state.strokes,
-        current: [action.point],
-      };
+    case "clear":
+      return { current: null, strokes: [] };
+    case "end":
+      return { current: null, strokes: [...state.strokes, state.current || []] };
+    case "load":
+      return { current: null, strokes: action.strokes };
     case "move":
       return state.current
         ? { ...state, current: [...state.current, action.point] }
         : state;
-    case "end":
-      return { strokes: [...state.strokes, state.current || []], current: null };
-    case "clear":
-      return { strokes: [], current: null };
-    case "load":
-      return { strokes: action.strokes, current: null };
+    case "start":
+      return {
+        current: [action.point],
+        strokes: state.current ? [...state.strokes, state.current] : state.strokes,
+      };
   }
 }
 
 export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange?: (has: boolean) => void }>(function PortraitCanvas({ onStrokesChange }, ref) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [{ strokes, current }, dispatch] = useReducer(reducer, {
-    strokes: [],
+  const [{ current, strokes }, dispatch] = useReducer(reducer, {
     current: null,
+    strokes: [],
   });
 
   const handleClear = useCallback(() => {
@@ -104,7 +104,11 @@ export const PortraitCanvas = forwardRef<PortraitCanvasHandle, { onStrokesChange
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       e.preventDefault();
-      (e.target as Element).setPointerCapture(e.pointerId);
+      try {
+        (e.target as Element).setPointerCapture(e.pointerId);
+      } catch {
+        // setPointerCapture can throw in some headless environments; ignore
+      }
       dispatch({ type: "start", point: getPoint(e) });
     },
     [getPoint]

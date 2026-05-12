@@ -1,7 +1,24 @@
 import { useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "dungeon-motion-editor-document-v3";
+const STORAGE_LEGACY_KEYS = [
+  "dungeon-motion-editor-document-v2",
+  "dungeon-motion-editor-document-v1",
+  "dungeon-motion-editor-document",
+];
 const SPELLCHECK_KEY = "dungeon-motion-editor-spellcheck";
+
+function migrateStorage() {
+  if (localStorage.getItem(STORAGE_KEY)) return;
+  for (const key of STORAGE_LEGACY_KEYS) {
+    const data = localStorage.getItem(key);
+    if (data) {
+      localStorage.setItem(STORAGE_KEY, data);
+      localStorage.removeItem(key);
+      return;
+    }
+  }
+}
 
 const DEFAULT_HTML = [
   "<h1>Untitled Expedition</h1>",
@@ -121,13 +138,10 @@ function placeCaretAtStart(element: HTMLElement) {
 }
 
 function findPrefixTextNode(block: HTMLElement, prefix: string): Text | null {
-  // The markdown prefix lives at the start of the first text node that
-  // carries it. Skip over noise like a leading <br> placeholder.
-  const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
-  let node: Node | null = walker.nextNode();
-  while (node) {
-    if (node instanceof Text && node.data.startsWith(prefix)) return node;
-    node = walker.nextNode();
+  // Only walk top-level text nodes — do not descend into inline children
+  // so a pasted <strong>- text</strong> isn't mis-identified as the prefix.
+  for (const child of block.childNodes) {
+    if (child instanceof Text && child.data.startsWith(prefix)) return child;
   }
   return null;
 }
@@ -163,8 +177,26 @@ function moveChildrenInto(source: ParentNode, target: ParentNode) {
   while (source.firstChild) target.append(source.firstChild);
 }
 
-function save(root: HTMLElement) {
+function saveImmediate(root: HTMLElement) {
   localStorage.setItem(STORAGE_KEY, root.innerHTML.replaceAll("\u200B", ""));
+}
+
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+function save(root: HTMLElement) {
+  if (saveTimer) clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    saveImmediate(root);
+    saveTimer = null;
+  }, 200);
+}
+
+function flushSave(root: HTMLElement) {
+  if (saveTimer) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+  }
+  saveImmediate(root);
 }
 
 function insertCaretMarker(root: HTMLElement) {
@@ -251,6 +283,16 @@ function absorbTrailingPunctuation(block: HTMLElement) {
   }
 
   return changed;
+}
+
+function normalizeEmptyBlocks(root: HTMLElement) {
+  for (const tag of ["p", "h1", "h2", "li"]) {
+    for (const el of root.querySelectorAll(tag)) {
+      if (el.childNodes.length === 0) {
+        el.append(document.createElement("br"));
+      }
+    }
+  }
 }
 
 function applyInlineTransform(root: HTMLElement) {
@@ -356,7 +398,12 @@ export function DungeonEditor() {
     const editor = editorRef.current;
     if (!editor) return;
 
+    migrateStorage();
     editor.innerHTML = sanitizeHtml(localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML);
+
+    const handleBeforeUnload = () => flushSave(editor);
+    globalThis.addEventListener("beforeunload", handleBeforeUnload);
+    return () => globalThis.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   useEffect(() => {
@@ -375,10 +422,16 @@ export function DungeonEditor() {
             [&_h2]:mt-16 [&_h2]:mb-3 [&_h2]:font-serif [&_h2]:text-[1.5rem] [&_h2]:leading-[1.05] [&_h2]:tracking-[0.04em]
             [&_p]:my-0 [&_p+*]:mt-4 [&_ul]:my-4 [&_ul]:pl-6 [&_li]:my-1.5 [&_strong]:font-semibold [&_i]:italic"
           contentEditable
-          onInput={() => {
+          onBlur={() => {
+            const editor = editorRef.current;
+            if (editor) flushSave(editor);
+          }}
+          onInput={(event) => {
             const editor = editorRef.current;
             if (!editor) return;
+            if ((event.nativeEvent as InputEvent).isComposing) return;
             applyInlineTransform(editor);
+            normalizeEmptyBlocks(editor);
             save(editor);
           }}
           onKeyDown={(event) => {
@@ -387,7 +440,8 @@ export function DungeonEditor() {
 
             if (event.key === "Enter" && handleEnter(editor)) {
               event.preventDefault();
-              save(editor);
+              normalizeEmptyBlocks(editor);
+              flushSave(editor);
             }
           }}
           onPaste={(event) => {
@@ -421,7 +475,8 @@ export function DungeonEditor() {
                 selection.removeAllRanges();
                 selection.addRange(range);
               }
-              save(editor);
+              normalizeEmptyBlocks(editor);
+              flushSave(editor);
               return;
             }
 
@@ -434,7 +489,8 @@ export function DungeonEditor() {
             const currentBlock = getCurrentBlock(editor);
             if (!currentBlock) {
               editor.append(content);
-              save(editor);
+              normalizeEmptyBlocks(editor);
+              flushSave(editor);
               return;
             }
 
@@ -474,7 +530,8 @@ export function DungeonEditor() {
             }
 
             if (previous instanceof HTMLElement) placeCaretAtEnd(previous);
-            save(editor);
+            normalizeEmptyBlocks(editor);
+            flushSave(editor);
           }}
           ref={editorRef}
           role="textbox"

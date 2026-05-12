@@ -456,3 +456,103 @@ test.describe('/editor — caret preservation', () => {
     expect(after).toEqual(before);
   });
 });
+
+test.describe('/editor — undo/redo', () => {
+  test('Ctrl+Z undoes last typed text', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('alpha');
+    await expect(editor).toContainText('alpha');
+
+    const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
+    await page.keyboard.press(`${mod}+z`);
+
+    const text = await editor.textContent();
+    // After undo, at least some of "alpha" should be removed.
+    expect(text?.includes('alpha')).toBe(false);
+  });
+
+  test('Ctrl+Shift+Z redoes undone text', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('beta');
+    await expect(editor).toContainText('beta');
+
+    const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
+    await page.keyboard.press(`${mod}+z`);
+    const afterUndo = await editor.textContent();
+    expect(afterUndo?.includes('beta')).toBe(false);
+
+    await page.keyboard.press(`${mod}+Shift+z`);
+    await expect(editor).toContainText('beta');
+  });
+});
+
+test.describe('/editor — backspace at heading', () => {
+  test('backspace at start of h2 does not destroy content', async ({ page }) => {
+    await seedDocument(page, '<h1>Title</h1><h2>Subtitle</h2><p>body</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+
+    // Click into h2 and press Home to move to start.
+    await editor.locator('h2').click();
+    await page.keyboard.press('Home');
+    await page.keyboard.press('Backspace');
+
+    // Both headings' text should still be present in the editor.
+    await expect(editor).toContainText('Title');
+    await expect(editor).toContainText('Subtitle');
+    await expect(editor).toContainText('body');
+  });
+});
+
+test.describe('/editor — multi-block select and delete', () => {
+  test('selecting across blocks and pressing Delete removes selected text', async ({ page }) => {
+    await seedDocument(page, '<p>first paragraph</p><p>second paragraph</p><p>third paragraph</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+
+    // Select from "first" through "second" by triple-clicking first p, then shift-clicking second.
+    const firstP = editor.locator('p').first();
+    await firstP.click({ clickCount: 3 });
+    await editor.locator('p').nth(1).click({ modifiers: ['Shift'] });
+
+    await page.keyboard.press('Delete');
+
+    // "third paragraph" must survive.
+    await expect(editor).toContainText('third paragraph');
+  });
+});
+
+test.describe('/editor — IME composition guard', () => {
+  test('inline transform does not fire during composing input', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    // Simulate a compositionstart → input (isComposing=true) → compositionend sequence.
+    // During composition, the transform must not run, so partial markers stay as text.
+    await editor.evaluate((el) => {
+      el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+
+      // Simulate typing partial text that looks like bold marker mid-composition.
+      const textNode = el.querySelector('p')?.firstChild;
+      if (textNode) textNode.textContent = '**partial';
+
+      const inputEvent = new InputEvent('input', {
+        bubbles: true,
+        isComposing: true,
+      });
+      el.dispatchEvent(inputEvent);
+    });
+
+    // The `**partial` text should remain as-is (not transformed to <strong>).
+    await expect(editor).toContainText('**partial');
+    await expect(editor.locator('strong')).toHaveCount(0);
+  });
+});

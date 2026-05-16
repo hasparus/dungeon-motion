@@ -54,6 +54,15 @@ export const SLASH_COMMANDS: SlashCommand[] = [
 
 const MAX_COUNT = 12;
 
+// Each pip is a binary toggle, so it carries role="checkbox" + aria-checked.
+// The label gives it an accessible name (a bare checkbox role has none) and
+// distinguishes the three track kinds for assistive tech and tests alike.
+export const PIP_LABEL: Record<Shape, string> = {
+  box: "checkbox",
+  circle: "progress segment",
+  diamond: "load segment",
+};
+
 export function clampCount(value: number): number {
   if (!Number.isFinite(value)) return 1;
   return Math.min(Math.max(Math.trunc(value), 1), MAX_COUNT);
@@ -63,7 +72,9 @@ export function buildPipElement(shape: Shape, filled: boolean): HTMLSpanElement 
   const pip = document.createElement("span");
   pip.className = "rpg-pip";
   pip.dataset.shape = shape;
-  pip.dataset.filled = filled ? "1" : "0";
+  pip.setAttribute("role", "checkbox");
+  pip.setAttribute("aria-label", PIP_LABEL[shape]);
+  pip.setAttribute("aria-checked", filled ? "true" : "false");
   pip.setAttribute("contenteditable", "false");
   return pip;
 }
@@ -84,15 +95,18 @@ interface TrackPreviewProps {
   shape: Shape;
 }
 
+// Inert illustration for menus and docs — aria-hidden so screen readers get
+// the surrounding prose instead of a redundant run of checkbox announcements.
 export function TrackPreview({ count, filled = 0, shape }: TrackPreviewProps) {
   return (
-    <span className="rpg-track" data-preview="1">
+    <span aria-hidden="true" className="rpg-track" data-preview="1">
       {Array.from({ length: clampCount(count) }, (_, i) => (
         <span
+          aria-checked={i < filled ? "true" : "false"}
           className="rpg-pip"
-          data-filled={i < filled ? "1" : "0"}
           data-shape={shape}
           key={i}
+          role="checkbox"
         />
       ))}
     </span>

@@ -558,35 +558,34 @@ test.describe('/editor — IME composition guard', () => {
 });
 
 test.describe('/editor — RPG slash commands', () => {
-  test('/check N inserts a track of N checkbox pips', async ({ page }) => {
+  test('/check N inserts a row of N checkboxes', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/check 3');
     await page.keyboard.press('Space');
 
-    await expect(editor.locator('.rpg-track')).toHaveCount(1);
-    await expect(editor.locator('.rpg-track .rpg-pip[data-shape="box"]')).toHaveCount(3);
+    await expect(editor.getByRole('checkbox', { name: 'checkbox' })).toHaveCount(3);
   });
 
-  test('/progress with no count uses the default count of 4 circles', async ({ page }) => {
+  test('/progress with no count uses the default of 4 segments', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/progress');
     await page.keyboard.press('Enter');
 
-    await expect(editor.locator('.rpg-pip[data-shape="circle"]')).toHaveCount(4);
+    await expect(editor.getByRole('checkbox', { name: 'progress segment' })).toHaveCount(4);
   });
 
-  test('/load N inserts a track of N diamond pips', async ({ page }) => {
+  test('/load N inserts N load segments', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/load 5');
     await page.keyboard.press('Space');
 
-    await expect(editor.locator('.rpg-pip[data-shape="diamond"]')).toHaveCount(5);
+    await expect(editor.getByRole('checkbox', { name: 'load segment' })).toHaveCount(5);
   });
 
   test('/monster-move turns the line into a monster-move paragraph', async ({ page }) => {
@@ -636,6 +635,15 @@ test.describe('/editor — RPG slash commands', () => {
     await page.keyboard.press('Escape');
     await expect(page.getByRole('listbox')).toBeHidden();
   });
+
+  test('the command menu filters to the typed prefix', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/prog');
+    await expect(page.getByRole('option')).toHaveCount(1);
+    await expect(page.getByRole('option', { name: /progress/i })).toBeVisible();
+  });
 });
 
 test.describe('/editor — task lists', () => {
@@ -645,10 +653,10 @@ test.describe('/editor — task lists', () => {
 
     await editor.pressSequentially('- [ ] gather rope');
 
-    const item = editor.locator('li.rpg-task');
+    const item = editor.getByRole('listitem');
     await expect(item).toHaveCount(1);
     await expect(item).toHaveText('gather rope');
-    await expect(item.locator('.rpg-pip[data-filled="0"]')).toHaveCount(1);
+    await expect(item.getByRole('checkbox')).not.toBeChecked();
   });
 
   test('- [x] converts into a pre-checked task item', async ({ page }) => {
@@ -657,7 +665,7 @@ test.describe('/editor — task lists', () => {
 
     await editor.pressSequentially('- [x] secured');
 
-    await expect(editor.locator('li.rpg-task .rpg-pip[data-filled="1"]')).toHaveCount(1);
+    await expect(editor.getByRole('listitem').getByRole('checkbox')).toBeChecked();
   });
 
   test('Enter on a task item continues the list with a fresh checkbox', async ({ page }) => {
@@ -668,9 +676,9 @@ test.describe('/editor — task lists', () => {
     await page.keyboard.press('Enter');
     await editor.pressSequentially('second');
 
-    await expect(editor.locator('li.rpg-task')).toHaveCount(2);
-    await expect(editor.locator('li.rpg-task').nth(1)).toHaveText('second');
-    await expect(editor.locator('li.rpg-task .rpg-pip')).toHaveCount(2);
+    await expect(editor.getByRole('listitem')).toHaveCount(2);
+    await expect(editor.getByRole('listitem').nth(1)).toHaveText('second');
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
   });
 
   test('Enter on an empty task item exits the list', async ({ page }) => {
@@ -678,43 +686,44 @@ test.describe('/editor — task lists', () => {
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('- [ ] ');
-    await expect(editor.locator('li.rpg-task')).toHaveCount(1);
+    await expect(editor.getByRole('listitem')).toHaveCount(1);
 
     await page.keyboard.press('Enter');
-    await expect(editor.locator('li.rpg-task')).toHaveCount(0);
+    await expect(editor.getByRole('listitem')).toHaveCount(0);
   });
 });
 
 test.describe('/editor — RPG atom interaction', () => {
-  test('clicking a pip toggles its filled state', async ({ page }) => {
+  test('clicking a pip toggles its checked state', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/check 2');
     await page.keyboard.press('Space');
 
-    const pip = editor.locator('.rpg-pip').first();
-    await expect(pip).toHaveAttribute('data-filled', '0');
+    const pip = editor.getByRole('checkbox').first();
+    await expect(pip).not.toBeChecked();
 
     await pip.click();
-    await expect(pip).toHaveAttribute('data-filled', '1');
+    await expect(pip).toBeChecked();
 
     await pip.click();
-    await expect(pip).toHaveAttribute('data-filled', '0');
+    await expect(pip).not.toBeChecked();
   });
 
-  test('inserted atoms survive a reload', async ({ page }) => {
+  test('inserted atoms and their checked state survive a reload', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/check 3');
     await page.keyboard.press('Space');
-    await editor.locator('.rpg-pip').first().click();
+    await editor.getByRole('checkbox').first().click();
+    await expect(editor.getByRole('checkbox').first()).toBeChecked();
 
     await page.reload();
 
-    await expect(editor.locator('.rpg-pip[data-shape="box"]')).toHaveCount(3);
-    await expect(editor.locator('.rpg-pip[data-filled="1"]')).toHaveCount(1);
+    await expect(editor.getByRole('checkbox')).toHaveCount(3);
+    await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
   });
 });
 
@@ -722,7 +731,7 @@ test.describe('/editor — security: RPG atom sanitization', () => {
   test('round-trips RPG atoms from saved HTML', async ({ page }) => {
     await seedDocument(
       page,
-      '<p>before <span class="rpg-track" contenteditable="false"><span class="rpg-pip" data-shape="circle" data-filled="1"></span><span class="rpg-pip" data-shape="circle" data-filled="0"></span></span> after</p>',
+      '<p>before <span class="rpg-track" contenteditable="false"><span class="rpg-pip" role="checkbox" data-shape="circle" aria-checked="true"></span><span class="rpg-pip" role="checkbox" data-shape="circle" aria-checked="false"></span></span> after</p>',
     );
     await page.goto('/editor');
 
@@ -730,24 +739,25 @@ test.describe('/editor — security: RPG atom sanitization', () => {
     await expect(editor).toBeVisible();
     await expect(editor).toContainText('before');
     await expect(editor).toContainText('after');
-    await expect(editor.locator('.rpg-pip[data-shape="circle"]')).toHaveCount(2);
-    await expect(editor.locator('.rpg-pip[data-filled="1"]')).toHaveCount(1);
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
+    await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
   });
 
-  test('normalizes invalid pip data attributes and drops unknown ones', async ({ page }) => {
+  test('normalizes invalid pip attributes and drops unknown ones', async ({ page }) => {
     await seedDocument(
       page,
-      '<p><span class="rpg-pip" data-shape="javascript:" data-filled="evil" data-bogus="x" onclick="globalThis.__xss = true">p</span></p>',
+      '<p><span class="rpg-pip" data-shape="javascript:" aria-checked="evil" data-bogus="x" onclick="globalThis.__xss = true">p</span></p>',
     );
     await page.goto('/editor');
 
     const editor = page.getByRole('textbox', { name: 'Editor' });
     await expect(editor).toBeVisible();
 
-    const pip = editor.locator('.rpg-pip');
+    const pip = editor.getByRole('checkbox');
     await expect(pip).toHaveCount(1);
-    await expect(pip).toHaveAttribute('data-shape', 'box');
-    await expect(pip).toHaveAttribute('data-filled', '0');
+    // Unknown shape falls back to the box checkbox; junk aria-checked → unchecked.
+    await expect(pip).toHaveAccessibleName('checkbox');
+    await expect(pip).not.toBeChecked();
     await expect(pip).not.toHaveAttribute('data-bogus', /.*/);
     await expect(pip).not.toHaveAttribute('onclick', /.*/);
     expect(await page.evaluate(() => (globalThis as unknown as { __xss: boolean }).__xss)).toBe(false);

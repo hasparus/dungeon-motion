@@ -4,6 +4,8 @@ import styles from "./dungeon-editor.module.css";
 import {
   buildPipElement,
   buildTrackElement,
+  PIP_LABEL,
+  type Shape,
   SLASH_COMMANDS,
   type SlashCommand,
 } from "./editor-atoms";
@@ -98,9 +100,15 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
         el.setAttribute("contenteditable", "false");
       }
       if (rpgClass === "rpg-pip") {
-        const shape = child.dataset.shape ?? "";
-        el.dataset.shape = RPG_SHAPES.has(shape) ? shape : "box";
-        el.dataset.filled = child.dataset.filled === "1" ? "1" : "0";
+        const rawShape = child.dataset.shape ?? "";
+        const shape = (RPG_SHAPES.has(rawShape) ? rawShape : "box") as Shape;
+        el.dataset.shape = shape;
+        el.setAttribute("role", "checkbox");
+        el.setAttribute("aria-label", PIP_LABEL[shape]);
+        el.setAttribute(
+          "aria-checked",
+          child.getAttribute("aria-checked") === "true" ? "true" : "false",
+        );
       }
       target.append(el);
       sanitizeInto(child, el);
@@ -702,7 +710,8 @@ export function DungeonEditor() {
             // Click a checkbox / progress / load pip to toggle it filled.
             const pip = (event.target as HTMLElement).closest?.(".rpg-pip");
             if (pip instanceof HTMLElement && editor.contains(pip)) {
-              pip.dataset.filled = pip.dataset.filled === "1" ? "0" : "1";
+              const checked = pip.getAttribute("aria-checked") === "true";
+              pip.setAttribute("aria-checked", checked ? "false" : "true");
               flushSave(editor);
             }
             refreshSlash();

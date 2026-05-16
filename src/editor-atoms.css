@@ -56,14 +56,14 @@
   transform: rotate(45deg) scale(0.88);
 }
 
-.rpg-pip[data-shape="circle"][data-filled="1"],
-.rpg-pip[data-shape="diamond"][data-filled="1"] {
+.rpg-pip[data-shape="circle"][aria-checked="true"],
+.rpg-pip[data-shape="diamond"][aria-checked="true"] {
   background-color: currentColor;
 }
 
 /* Filled checkbox: the same checkmark polygon used by the site's native
    checkboxes (index.css), so editor and compendium checkboxes look alike. */
-.rpg-pip[data-shape="box"][data-filled="1"]::before {
+.rpg-pip[data-shape="box"][aria-checked="true"]::before {
   content: "";
   position: absolute;
   inset: 0.04em;

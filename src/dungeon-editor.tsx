@@ -413,13 +413,13 @@ export function DungeonEditor() {
   }, [spellcheck]);
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <main className="min-h-screen">
       <div className="mx-auto max-w-3xl px-4 py-5 md:px-6 md:py-8 print:max-w-none print:px-0 print:py-0">
         <div
           aria-label="Editor"
           autoCapitalize={spellcheck ? "sentences" : "off"}
           autoCorrect={spellcheck ? "on" : "off"}
-          className={`${styles.editor} min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] text-stone-900 dark:text-stone-100 print:min-h-0 print:text-black`}
+          className={`${styles.editor} min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] print:min-h-0 print:text-black`}
           contentEditable
           onBlur={() => {
             const editor = editorRef.current;

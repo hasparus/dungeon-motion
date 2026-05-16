@@ -413,7 +413,7 @@ export function DungeonEditor() {
   }, [spellcheck]);
 
   return (
-    <main className="min-h-screen bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-stone-100">
+    <main className="min-h-screen text-stone-900 dark:text-stone-100">
       <div className="mx-auto max-w-3xl px-4 py-5 md:px-6 md:py-8 print:max-w-none print:px-0 print:py-0">
         <div
           aria-label="Editor"

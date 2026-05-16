@@ -10,6 +10,7 @@
 .editor h1,
 .editor h2 {
   font-family: var(--font-serif); /* "Avara", Georgia, serif */
+  font-weight: 900; /* Avara Black (700–900 @font-face range) */
 }
 
 .editor h1 {

@@ -13,7 +13,7 @@ async function resetEditor(page: Page) {
 
   const editor = page.getByRole('textbox', { name: 'Editor' });
   await expect(editor).toBeVisible();
-  await expect(page.locator('button[aria-label]')).toBeVisible();
+  await expect(page.locator('button[aria-label^="Turn spellcheck"]')).toBeVisible();
   await editor.click();
   return editor;
 }

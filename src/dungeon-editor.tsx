@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import styles from "./dungeon-editor.module.css";
+import {
+  buildPipElement,
+  buildTrackElement,
+  SLASH_COMMANDS,
+  type SlashCommand,
+} from "./editor-atoms";
+import { EditorHelpModal } from "./editor-help-modal";
+import { SlashMenu } from "./slash-menu";
+import "./editor-atoms.css";
 
 const STORAGE_KEY = "dungeon-motion-editor-document-v3";
 const STORAGE_LEGACY_KEYS = [
@@ -52,6 +61,19 @@ const BLOCK_TAGS = new Set(["H1", "H2", "OL", "P", "UL"]);
 const DROPPED_TAGS = new Set(["IFRAME", "MATH", "OBJECT", "SCRIPT", "STYLE", "SVG"]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
+// RPG primitive atoms (see editor-atoms.tsx) are embedded as elements carrying
+// a known class. The sanitizer must preserve them across the localStorage
+// round-trip — but strictly: only the class plus a small set of validated data
+// attributes survive, everything else is still dropped.
+const RPG_ATOM_TAGS: Record<string, string> = {
+  "rpg-monster-move": "P",
+  "rpg-pip": "SPAN",
+  "rpg-question": "P",
+  "rpg-task": "LI",
+  "rpg-track": "SPAN",
+};
+const RPG_SHAPES = new Set(["box", "circle", "diamond"]);
+
 function sanitizeInto(source: ParentNode, target: ParentNode) {
   for (const child of source.childNodes) {
     if (child.nodeType === Node.TEXT_NODE) {
@@ -66,6 +88,24 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
     const tag = TAG_RENAME[rawTag] ?? rawTag;
 
     if (DROPPED_TAGS.has(tag)) continue;
+
+    // RPG atom: keep the element with its class and validated data-* only.
+    const rpgClass = child.getAttribute("class");
+    if (rpgClass && RPG_ATOM_TAGS[rpgClass] === tag && child instanceof HTMLElement) {
+      const el = document.createElement(tag.toLowerCase());
+      el.className = rpgClass;
+      if (rpgClass === "rpg-pip" || rpgClass === "rpg-track") {
+        el.setAttribute("contenteditable", "false");
+      }
+      if (rpgClass === "rpg-pip") {
+        const shape = child.dataset.shape ?? "";
+        el.dataset.shape = RPG_SHAPES.has(shape) ? shape : "box";
+        el.dataset.filled = child.dataset.filled === "1" ? "1" : "0";
+      }
+      target.append(el);
+      sanitizeInto(child, el);
+      continue;
+    }
 
     if (ALLOWED_TAGS.has(tag)) {
       const el = document.createElement(tag.toLowerCase());
@@ -173,6 +213,34 @@ function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragmen
   }
 
   return fragment;
+}
+
+function extractAfterCaret(block: HTMLElement): DocumentFragment {
+  const selection = globalThis.getSelection();
+  const range = document.createRange();
+
+  if (selection && selection.rangeCount > 0 && block.contains(selection.anchorNode)) {
+    const caret = selection.getRangeAt(0);
+    range.setStart(caret.endContainer, caret.endOffset);
+  } else {
+    range.setStart(block, block.childNodes.length);
+  }
+  range.setEndAfter(block.lastChild ?? block);
+
+  return range.extractContents();
+}
+
+// Places the caret immediately after a block's first child — used for atoms
+// whose first child is a contenteditable=false pip the caret must clear.
+function setCaretAfterFirstChild(element: HTMLElement) {
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.setStart(element, Math.min(1, element.childNodes.length));
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
 }
 
 function moveChildrenInto(source: ParentNode, target: ParentNode) {
@@ -320,6 +388,96 @@ function applyInlineTransform(root: HTMLElement) {
   }
 }
 
+// `- [ ] ` / `- [x] ` shorthand. Fires on input the moment the trailing space
+// completes the marker, so the checkbox appears immediately rather than on
+// Enter like the other block transforms.
+function applyTaskShorthand(root: HTMLElement) {
+  const block = getCurrentBlock(root);
+  if (!block) return;
+
+  const text = normalizeEditableText(block.textContent ?? "");
+
+  if (block.tagName === "P") {
+    const match = text.match(/^[-*+] \[([ xX])\] $/);
+    if (!match) return;
+
+    const item = document.createElement("li");
+    item.className = "rpg-task";
+    item.append(buildPipElement("box", match[1].toLowerCase() === "x"));
+    const list = document.createElement("ul");
+    list.append(item);
+    block.replaceWith(list);
+    setCaretAfterFirstChild(item);
+    return;
+  }
+
+  if (block.tagName === "LI" && !block.classList.contains("rpg-task")) {
+    const match = text.match(/^\[([ xX])\] /);
+    if (!match) return;
+
+    const prefixNode = findPrefixTextNode(block, match[0]);
+    if (!prefixNode) return;
+
+    prefixNode.data = prefixNode.data.slice(match[0].length);
+    if (!prefixNode.data) prefixNode.remove();
+    block.classList.add("rpg-task");
+    block.prepend(buildPipElement("box", match[1].toLowerCase() === "x"));
+  }
+}
+
+interface SlashState {
+  atStart: boolean;
+  blockTag: string;
+  count: number | null;
+  query: string;
+  rect: DOMRect;
+}
+
+// The query reaches from the `/` to the caret: a command name, then an
+// optional count. SLASH_QUERY_BOUNDED additionally anchors the `/` to a word
+// boundary so prose like `and/or` and dates never open the menu.
+const SLASH_QUERY = /\/([a-z-]*)(?: +(\d+))? *$/;
+const SLASH_QUERY_BOUNDED = /(^|\s)\/([a-z-]*)(?: +(\d+))? *$/;
+
+function readSlashState(root: HTMLElement): SlashState | null {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!range.collapsed || !(range.startContainer instanceof Text)) return null;
+  if (!root.contains(range.startContainer)) return null;
+
+  const localMatch = range.startContainer.data.slice(0, range.startOffset).match(SLASH_QUERY);
+  if (!localMatch) return null;
+
+  const block = getCurrentBlock(root);
+  if (!block) return null;
+
+  const blockRange = document.createRange();
+  blockRange.selectNodeContents(block);
+  blockRange.setEnd(range.startContainer, range.startOffset);
+  const blockMatch = blockRange.toString().match(SLASH_QUERY_BOUNDED);
+  if (!blockMatch) return null;
+
+  return {
+    atStart: blockMatch[1] === "",
+    blockTag: block.tagName,
+    count: localMatch[2] ? Number.parseInt(localMatch[2], 10) : null,
+    query: localMatch[1],
+    rect: range.getBoundingClientRect(),
+  };
+}
+
+// Track commands apply anywhere; block commands only at the start of a plain
+// paragraph (commitSlash adds the class to a <p>, so nothing else qualifies).
+function matchSlashCommands(state: SlashState): SlashCommand[] {
+  return SLASH_COMMANDS.filter(
+    (command) =>
+      command.name.startsWith(state.query) &&
+      (command.kind === "track" || (state.atStart && state.blockTag === "P")),
+  );
+}
+
 function handleEnter(root: HTMLElement) {
   const block = getCurrentBlock(root);
   if (!block) return false;
@@ -362,8 +520,47 @@ function handleEnter(root: HTMLElement) {
     return true;
   }
 
+  if (
+    block.tagName === "P" &&
+    (block.classList.contains("rpg-monster-move") || block.classList.contains("rpg-question"))
+  ) {
+    const className = block.classList.contains("rpg-monster-move")
+      ? "rpg-monster-move"
+      : "rpg-question";
+
+    // Enter on an empty styled line exits it back to a plain paragraph.
+    if (!rawText.trim()) {
+      block.classList.remove(className);
+      placeCaretAtEnd(block);
+      return true;
+    }
+
+    // Otherwise split into another line of the same kind.
+    const paragraph = document.createElement("p");
+    paragraph.className = className;
+    const tail = extractAfterCaret(block);
+    if (tail.childNodes.length > 0) paragraph.append(tail);
+    else paragraph.innerHTML = "<br>";
+    block.after(paragraph);
+    placeCaretAtStart(paragraph);
+    return true;
+  }
+
   if (block.tagName === "LI") {
     const text = rawText.trim();
+
+    // Continue a task list: a fresh item carries its own checkbox.
+    if (text && block.classList.contains("rpg-task")) {
+      const item = document.createElement("li");
+      item.className = "rpg-task";
+      item.append(buildPipElement("box", false));
+      const tail = extractAfterCaret(block);
+      if (tail.childNodes.length > 0) item.append(tail);
+      block.after(item);
+      setCaretAfterFirstChild(item);
+      return true;
+    }
+
     if (text) return false;
 
     const list = block.parentElement;
@@ -395,6 +592,78 @@ export function DungeonEditor() {
     const saved = localStorage.getItem(SPELLCHECK_KEY);
     return saved === null ? true : saved === "true";
   });
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [slash, setSlash] = useState<SlashState | null>(null);
+  const [slashIndex, setSlashIndex] = useState(0);
+
+  // Recomputes the pending `/command` query after any caret-moving event.
+  function refreshSlash() {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const next = readSlashState(editor);
+    setSlash(next && matchSlashCommands(next).length > 0 ? next : null);
+    setSlashIndex(0);
+  }
+
+  // Replaces the typed `/command` query with its rendered atom.
+  function commitSlash(command: SlashCommand, count: number | null) {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    const selection = globalThis.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      setSlash(null);
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+    const node = range.startContainer;
+    if (!(node instanceof Text)) {
+      setSlash(null);
+      return;
+    }
+
+    const localMatch = node.data.slice(0, range.startOffset).match(SLASH_QUERY);
+    if (!localMatch) {
+      setSlash(null);
+      return;
+    }
+
+    const deleteRange = document.createRange();
+    deleteRange.setStart(node, range.startOffset - localMatch[0].length);
+    deleteRange.setEnd(node, range.startOffset);
+    deleteRange.deleteContents();
+
+    if (command.kind === "track" && command.shape) {
+      // deleteRange is collapsed at the deletion point; insert the atom and a
+      // trailing space there as one fragment, then drop the caret past both.
+      const track = buildTrackElement(command.shape, count ?? command.defaultCount);
+      // Non-breaking space: a plain trailing space next to an inline atom gets
+      // collapsed away by contentEditable whitespace normalisation.
+      const space = document.createTextNode("\u00A0");
+      const fragment = document.createDocumentFragment();
+      fragment.append(track, space);
+      deleteRange.insertNode(fragment);
+
+      const caret = document.createRange();
+      caret.setStartAfter(space);
+      caret.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(caret);
+    } else if (command.blockClass) {
+      const block = getCurrentBlock(editor);
+      if (block && block.tagName === "P") {
+        // Replace the line kind rather than stacking marker classes.
+        block.classList.remove("rpg-monster-move", "rpg-question");
+        block.classList.add(command.blockClass);
+      }
+    }
+
+    setSlash(null);
+    setSlashIndex(0);
+    normalizeEmptyBlocks(editor);
+    flushSave(editor);
+  }
 
   useEffect(() => {
     const editor = editorRef.current;
@@ -424,18 +693,69 @@ export function DungeonEditor() {
           onBlur={() => {
             const editor = editorRef.current;
             if (editor) flushSave(editor);
+            setSlash(null);
+          }}
+          onClick={(event) => {
+            const editor = editorRef.current;
+            if (!editor) return;
+
+            // Click a checkbox / progress / load pip to toggle it filled.
+            const pip = (event.target as HTMLElement).closest?.(".rpg-pip");
+            if (pip instanceof HTMLElement && editor.contains(pip)) {
+              pip.dataset.filled = pip.dataset.filled === "1" ? "0" : "1";
+              flushSave(editor);
+            }
+            refreshSlash();
           }}
           onInput={(event) => {
             const editor = editorRef.current;
             if (!editor) return;
             if ((event.nativeEvent as InputEvent).isComposing) return;
             applyInlineTransform(editor);
+            applyTaskShorthand(editor);
             normalizeEmptyBlocks(editor);
+            refreshSlash();
             save(editor);
           }}
           onKeyDown={(event) => {
             const editor = editorRef.current;
             if (!editor) return;
+
+            if (slash) {
+              const matches = matchSlashCommands(slash);
+              if (matches.length > 0) {
+                const selected = matches[Math.min(slashIndex, matches.length - 1)];
+
+                if (event.key === "ArrowDown") {
+                  event.preventDefault();
+                  setSlashIndex((index) => (index + 1) % matches.length);
+                  return;
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setSlashIndex((index) => (index - 1 + matches.length) % matches.length);
+                  return;
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  setSlash(null);
+                  return;
+                }
+                // A track command needs its count before it can be committed;
+                // until then, let Space through so the number can be typed.
+                const ready = selected.kind === "block" || slash.count !== null;
+                if (event.key === "Enter" || event.key === "Tab") {
+                  event.preventDefault();
+                  commitSlash(selected, slash.count);
+                  return;
+                }
+                if (event.key === " " && ready) {
+                  event.preventDefault();
+                  commitSlash(selected, slash.count);
+                  return;
+                }
+              }
+            }
 
             if (event.key === "Enter" && handleEnter(editor)) {
               event.preventDefault();
@@ -549,6 +869,28 @@ export function DungeonEditor() {
           </button>
         </div>
       </div>
+
+      <button
+        aria-haspopup="dialog"
+        aria-label="Editor guide"
+        className="fixed right-4 top-4 z-30 flex size-10 items-center justify-center rounded-full border border-stone-300 bg-white/80 text-lg text-stone-500 backdrop-blur transition hover:bg-stone-100 hover:text-stone-900 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50 print:hidden"
+        onClick={() => setHelpOpen(true)}
+        type="button"
+      >
+        <span aria-hidden="true">?</span>
+      </button>
+
+      {slash && (
+        <SlashMenu
+          commands={matchSlashCommands(slash)}
+          count={slash.count}
+          index={slashIndex}
+          onPick={(command) => commitSlash(command, slash.count)}
+          rect={slash.rect}
+        />
+      )}
+
+      <EditorHelpModal onClose={() => setHelpOpen(false)} open={helpOpen} />
     </main>
   );
 }

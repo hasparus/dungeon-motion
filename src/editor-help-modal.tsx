@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef } from "react";
 
 import { SLASH_COMMANDS, TrackPreview } from "./editor-atoms";
+import "./editor-help-modal.css";
 
 interface EditorHelpModalProps {
   onClose: () => void;
@@ -29,67 +30,34 @@ function Section({ children, title }: { children: ReactNode; title: string }) {
   );
 }
 
+// Native <dialog>: showModal() gives a real focus trap, Esc handling and
+// top-layer rendering for free; the open/close animation lives in
+// editor-help-modal.css. The element stays mounted so the exit transition
+// can play before the browser hides it.
 export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!open) return;
-
     const dialog = dialogRef.current;
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-        return;
-      }
-      if (event.key !== "Tab" || !dialog) return;
-
-      const focusable = [
-        ...dialog.querySelectorAll<HTMLElement>(
-          'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
-        ),
-      ];
-      const first = focusable[0];
-      const last = focusable.at(-1);
-      if (!first || !last) return;
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("keydown", handleKey);
-    dialog?.focus();
-
-    return () => {
-      document.removeEventListener("keydown", handleKey);
-      previouslyFocused?.focus?.();
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    else if (!open && dialog.open) dialog.close();
+  }, [open]);
 
   const trackCommands = SLASH_COMMANDS.filter((command) => command.kind === "track");
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-stone-950/40 p-4 py-10 backdrop-blur-sm print:hidden"
-      onClick={onClose}
+    <dialog
+      aria-label="Editor guide"
+      className="editor-help-dialog w-[calc(100vw-2rem)] max-w-lg rounded-xl border border-stone-200 bg-white text-stone-900 shadow-2xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 print:hidden"
+      // A click whose target is the dialog itself landed on the ::backdrop.
+      onClick={(event) => {
+        if (event.target === dialogRef.current) onClose();
+      }}
+      onClose={onClose}
+      ref={dialogRef}
     >
-      <div
-        aria-label="Editor guide"
-        aria-modal="true"
-        className="relative w-full max-w-lg rounded-xl border border-stone-200 bg-white p-6 text-stone-900 shadow-2xl outline-none dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
-        onClick={(event) => event.stopPropagation()}
-        ref={dialogRef}
-        role="dialog"
-        tabIndex={-1}
-      >
+      <div className="p-6">
         <div className="flex items-start justify-between gap-4">
           <h2 className="m-0 font-serif text-2xl tracking-wide">Editor guide</h2>
           <button
@@ -142,6 +110,6 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
           </Row>
         </Section>
       </div>
-    </div>
+    </dialog>
   );
 }

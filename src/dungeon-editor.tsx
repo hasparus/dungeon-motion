@@ -882,11 +882,11 @@ export function DungeonEditor() {
       <button
         aria-haspopup="dialog"
         aria-label="Editor guide"
-        className="fixed right-4 top-4 z-30 flex size-10 items-center justify-center rounded-full border border-stone-300 bg-white/80 text-lg text-stone-500 backdrop-blur transition hover:bg-stone-100 hover:text-stone-900 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50 print:hidden"
+        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center text-stone-300 transition-colors hover:text-stone-600 dark:text-stone-600 dark:hover:text-stone-300 print:hidden"
         onClick={() => setHelpOpen(true)}
         type="button"
       >
-        <span aria-hidden="true">?</span>
+        <span aria-hidden="true" className="text-lg leading-none">?</span>
       </button>
 
       {slash && (

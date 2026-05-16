@@ -89,7 +89,26 @@ test.describe('/editor', () => {
     await editor.pressSequentially('1. first item');
     await page.keyboard.press('Enter');
 
-    await expect(editor.locator('ol > li')).toHaveText('first item');
+    await expect(editor.locator('ol > li').first()).toHaveText('first item');
+  });
+
+  test('Enter keeps a list going, then an empty item exits it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- one');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('two');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('three');
+    await expect(editor.locator('ul > li')).toHaveText(['one', 'two', 'three']);
+
+    // Enter on the (empty) next item drops back out to a paragraph.
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
+    await expect(editor.locator('ul > li')).toHaveText(['one', 'two', 'three']);
+    await editor.pressSequentially('after the list');
+    await expect(editor.locator('p')).toContainText('after the list');
   });
 
   test('converts bold markdown into a strong tag', async ({ page }) => {

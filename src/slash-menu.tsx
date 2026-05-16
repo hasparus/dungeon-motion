@@ -12,8 +12,8 @@ interface SlashMenuProps {
 
 // Autocomplete popup for `/` commands. Keyboard navigation is owned by the
 // editor (it intercepts arrows/Enter while the menu is open); this component
-// only renders and handles pointer selection. font-sans keeps it reading as
-// tool UI rather than the editor's display serif.
+// only renders and handles pointer selection. font-text matches the editor's
+// reading serif (Crimson Text).
 export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuProps) {
   if (commands.length === 0) return null;
 
@@ -21,7 +21,7 @@ export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuP
 
   return (
     <div
-      className="fixed z-40 overflow-hidden rounded-lg border border-stone-300 bg-white py-1 font-sans shadow-xl dark:border-stone-700 dark:bg-stone-900"
+      className="fixed z-40 overflow-hidden rounded-lg border border-stone-300 bg-white font-text shadow-xl dark:border-stone-700 dark:bg-stone-900"
       role="listbox"
       style={{ width: anchor.width, left: anchor.left, top: anchor.top + 6 }}
     >

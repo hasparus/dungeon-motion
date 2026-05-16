@@ -537,25 +537,26 @@ function handleEnter(root: HTMLElement) {
     return true;
   }
 
-  // `- ` / `* ` / `+ ` start an unordered list; `1. ` an ordered one.
+  // `- ` / `* ` / `+ ` start an unordered list; `1. ` an ordered one. The
+  // caret lands in a fresh trailing item so the list keeps going on Enter;
+  // an Enter on that still-empty item exits the list (see the LI branch).
   const bulletMatch = rawText.match(/^[-*+] /);
   const listMatch = bulletMatch ?? rawText.match(/^\d+\. /);
   if (block.tagName === "P" && listMatch) {
-    const prefix = listMatch[0];
-    const item = document.createElement("li");
-    item.append(extractBeforeCaret(block, prefix));
-    const list = document.createElement(bulletMatch ? "ul" : "ol");
-    list.append(item);
+    const firstItem = document.createElement("li");
+    firstItem.append(extractBeforeCaret(block, listMatch[0]));
 
-    const paragraph = document.createElement("p");
+    const nextItem = document.createElement("li");
     const hasAfter = block.hasChildNodes();
-    if (hasAfter) moveChildrenInto(block, paragraph);
-    else paragraph.innerHTML = "<br>";
+    if (hasAfter) moveChildrenInto(block, nextItem);
+    else nextItem.innerHTML = "<br>";
 
+    const list = document.createElement(bulletMatch ? "ul" : "ol");
+    list.append(firstItem, nextItem);
     block.replaceWith(list);
-    list.after(paragraph);
-    if (hasAfter) placeCaretAtStart(paragraph);
-    else placeCaretAtEnd(paragraph);
+
+    if (hasAfter) placeCaretAtStart(nextItem);
+    else placeCaretAtEnd(nextItem);
     return true;
   }
 
@@ -722,7 +723,7 @@ export function DungeonEditor() {
 
   return (
     <main className="min-h-screen">
-      <div className="mx-auto max-w-3xl px-4 py-5 md:px-6 md:py-8 print:max-w-none print:px-0 print:py-0">
+      <div className="mx-auto max-w-3xl px-4 py-24 md:px-6 print:max-w-none print:px-0 print:py-0">
         <div
           aria-label="Editor"
           autoCapitalize={spellcheck ? "sentences" : "off"}

@@ -4,7 +4,7 @@
    natural as CSS. Layout/color utilities stay in className. */
 
 .editor {
-  font-family: "Crimson Text", Georgia, serif;
+  font-family: var(--font-text);
 }
 
 .editor h1,

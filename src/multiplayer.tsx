@@ -46,10 +46,10 @@ function bindForm(form: HTMLFormElement, ymap: Y.Map<boolean | string>) {
       if (f instanceof HTMLInputElement && f.type === "checkbox") {
         if (f.checked === v) continue;
         f.checked = v as boolean;
-      } else if (f.value !== v) {
-        f.value = v as string;
-      } else {
+      } else if (f.value === v) {
         continue;
+      } else {
+        f.value = v as string;
       }
       f.dispatchEvent(new Event("input", { bubbles: true }));
       f.dispatchEvent(new Event("change", { bubbles: true }));

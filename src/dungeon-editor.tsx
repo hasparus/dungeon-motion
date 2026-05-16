@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import styles from "./dungeon-editor.module.css";
+
 const STORAGE_KEY = "dungeon-motion-editor-document-v3";
 const STORAGE_LEGACY_KEYS = [
   "dungeon-motion-editor-document-v2",
@@ -417,10 +419,7 @@ export function DungeonEditor() {
           aria-label="Editor"
           autoCapitalize={spellcheck ? "sentences" : "off"}
           autoCorrect={spellcheck ? "on" : "off"}
-          className="min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] text-stone-900 dark:text-stone-100 print:min-h-0 print:text-black
-            [&_h1]:mt-0 [&_h1]:mb-4 [&_h1]:font-serif [&_h1]:text-[2.2rem] [&_h1]:leading-[0.95] [&_h1]:tracking-[0.02em]
-            [&_h2]:mt-16 [&_h2]:mb-3 [&_h2]:font-serif [&_h2]:text-[1.5rem] [&_h2]:leading-[1.05] [&_h2]:tracking-[0.04em]
-            [&_p]:my-0 [&_p+*]:mt-4 [&_ul]:my-4 [&_ul]:pl-6 [&_li]:my-1.5 [&_strong]:font-semibold [&_i]:italic"
+          className={`${styles.editor} min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] text-stone-900 dark:text-stone-100 print:min-h-0 print:text-black`}
           contentEditable
           onBlur={() => {
             const editor = editorRef.current;
@@ -536,7 +535,6 @@ export function DungeonEditor() {
           ref={editorRef}
           role="textbox"
           spellCheck={spellcheck}
-          style={{ fontFamily: '"Crimson Text", Georgia, serif' }}
           suppressContentEditableWarning
         />
 

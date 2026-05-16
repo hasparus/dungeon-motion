@@ -556,3 +556,236 @@ test.describe('/editor — IME composition guard', () => {
     await expect(editor.locator('strong')).toHaveCount(0);
   });
 });
+
+test.describe('/editor — RPG slash commands', () => {
+  test('/check N inserts a track of N checkbox pips', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/check 3');
+    await page.keyboard.press('Space');
+
+    await expect(editor.locator('.rpg-track')).toHaveCount(1);
+    await expect(editor.locator('.rpg-track .rpg-pip[data-shape="box"]')).toHaveCount(3);
+  });
+
+  test('/progress with no count uses the default count of 4 circles', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/progress');
+    await page.keyboard.press('Enter');
+
+    await expect(editor.locator('.rpg-pip[data-shape="circle"]')).toHaveCount(4);
+  });
+
+  test('/load N inserts a track of N diamond pips', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/load 5');
+    await page.keyboard.press('Space');
+
+    await expect(editor.locator('.rpg-pip[data-shape="diamond"]')).toHaveCount(5);
+  });
+
+  test('/monster-move turns the line into a monster-move paragraph', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/monster-move');
+    await page.keyboard.press('Space');
+    await editor.pressSequentially('strikes from the dark');
+
+    await expect(editor.locator('p.rpg-monster-move')).toHaveText('strikes from the dark');
+  });
+
+  test('/question turns the line into a question paragraph', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/question');
+    await page.keyboard.press('Space');
+    await editor.pressSequentially('who lit the beacon');
+
+    await expect(editor.locator('p.rpg-question')).toHaveText('who lit the beacon');
+  });
+
+  test('switching a monster-move line to a question replaces the kind, not stacks it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/monster-move');
+    await page.keyboard.press('Space');
+    await expect(editor.locator('p.rpg-monster-move')).toHaveCount(1);
+
+    await editor.pressSequentially('/question');
+    await page.keyboard.press('Space');
+
+    await expect(editor.locator('p.rpg-monster-move')).toHaveCount(0);
+    await expect(editor.locator('p.rpg-question')).toHaveCount(1);
+  });
+
+  test('typing / opens the command menu and Escape dismisses it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/');
+    await expect(page.getByRole('listbox')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('listbox')).toBeHidden();
+  });
+});
+
+test.describe('/editor — task lists', () => {
+  test('- [ ] converts a paragraph into a checkbox list item', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] gather rope');
+
+    const item = editor.locator('li.rpg-task');
+    await expect(item).toHaveCount(1);
+    await expect(item).toHaveText('gather rope');
+    await expect(item.locator('.rpg-pip[data-filled="0"]')).toHaveCount(1);
+  });
+
+  test('- [x] converts into a pre-checked task item', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [x] secured');
+
+    await expect(editor.locator('li.rpg-task .rpg-pip[data-filled="1"]')).toHaveCount(1);
+  });
+
+  test('Enter on a task item continues the list with a fresh checkbox', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] first');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('second');
+
+    await expect(editor.locator('li.rpg-task')).toHaveCount(2);
+    await expect(editor.locator('li.rpg-task').nth(1)).toHaveText('second');
+    await expect(editor.locator('li.rpg-task .rpg-pip')).toHaveCount(2);
+  });
+
+  test('Enter on an empty task item exits the list', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] ');
+    await expect(editor.locator('li.rpg-task')).toHaveCount(1);
+
+    await page.keyboard.press('Enter');
+    await expect(editor.locator('li.rpg-task')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — RPG atom interaction', () => {
+  test('clicking a pip toggles its filled state', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/check 2');
+    await page.keyboard.press('Space');
+
+    const pip = editor.locator('.rpg-pip').first();
+    await expect(pip).toHaveAttribute('data-filled', '0');
+
+    await pip.click();
+    await expect(pip).toHaveAttribute('data-filled', '1');
+
+    await pip.click();
+    await expect(pip).toHaveAttribute('data-filled', '0');
+  });
+
+  test('inserted atoms survive a reload', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/check 3');
+    await page.keyboard.press('Space');
+    await editor.locator('.rpg-pip').first().click();
+
+    await page.reload();
+
+    await expect(editor.locator('.rpg-pip[data-shape="box"]')).toHaveCount(3);
+    await expect(editor.locator('.rpg-pip[data-filled="1"]')).toHaveCount(1);
+  });
+});
+
+test.describe('/editor — security: RPG atom sanitization', () => {
+  test('round-trips RPG atoms from saved HTML', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p>before <span class="rpg-track" contenteditable="false"><span class="rpg-pip" data-shape="circle" data-filled="1"></span><span class="rpg-pip" data-shape="circle" data-filled="0"></span></span> after</p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText('before');
+    await expect(editor).toContainText('after');
+    await expect(editor.locator('.rpg-pip[data-shape="circle"]')).toHaveCount(2);
+    await expect(editor.locator('.rpg-pip[data-filled="1"]')).toHaveCount(1);
+  });
+
+  test('normalizes invalid pip data attributes and drops unknown ones', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p><span class="rpg-pip" data-shape="javascript:" data-filled="evil" data-bogus="x" onclick="globalThis.__xss = true">p</span></p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+
+    const pip = editor.locator('.rpg-pip');
+    await expect(pip).toHaveCount(1);
+    await expect(pip).toHaveAttribute('data-shape', 'box');
+    await expect(pip).toHaveAttribute('data-filled', '0');
+    await expect(pip).not.toHaveAttribute('data-bogus', /.*/);
+    await expect(pip).not.toHaveAttribute('onclick', /.*/);
+    expect(await page.evaluate(() => (globalThis as unknown as { __xss: boolean }).__xss)).toBe(false);
+  });
+
+  test('flattens a span whose class is not an exact RPG atom match', async ({ page }) => {
+    await seedDocument(page, '<p>aaa<span class="rpg-pip-fake">bbb</span>ccc</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText('aaabbbccc');
+    await expect(editor.locator('span')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — help modal', () => {
+  test('the ? button opens the guide and Escape closes it', async ({ page }) => {
+    await page.goto('/editor');
+    await resetEditor(page);
+
+    await page.getByRole('button', { name: 'Editor guide' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editor guide' });
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  });
+
+  test('the close button dismisses the guide', async ({ page }) => {
+    await page.goto('/editor');
+    await resetEditor(page);
+
+    await page.getByRole('button', { name: 'Editor guide' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editor guide' });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toBeHidden();
+  });
+});

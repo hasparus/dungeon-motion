@@ -75,11 +75,16 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
         </p>
 
         <Section title="Text">
-          <Row code="# ">Expedition title</Row>
-          <Row code="## ">Section heading</Row>
+          <Row code="# ">Heading</Row>
+          <Row code="## ">Subheading</Row>
           <Row code="- ">Bullet list</Row>
-          <Row code="**bold**">Bold — for pressure</Row>
-          <Row code="_italic_">Italic — for whispers</Row>
+          <Row code="1. ">Numbered list</Row>
+          <Row code="**bold**">
+            Turns a word <strong>bold</strong>
+          </Row>
+          <Row code="_italic_">
+            Turns a word <i>italic</i>
+          </Row>
         </Section>
 
         <Section title="Checkboxes & tracks">

@@ -82,6 +82,16 @@ test.describe('/editor', () => {
     await expect(page.getByRole('listitem').first()).toHaveText(bullet);
   });
 
+  test('converts a numbered list trigger into an ordered list', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('1. first item');
+    await page.keyboard.press('Enter');
+
+    await expect(editor.locator('ol > li')).toHaveText('first item');
+  });
+
   test('converts bold markdown into a strong tag', async ({ page }) => {
     const stamp = Date.now();
     const bold = `bold-${stamp}`;
@@ -91,7 +101,7 @@ test.describe('/editor', () => {
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use **${bold}**`);
 
-    await expect(page.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('strong')).toHaveText(bold);
     await expect(page.getByText(`Use ${bold}`)).toBeVisible();
   });
 
@@ -104,7 +114,7 @@ test.describe('/editor', () => {
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use _${italics}_.`);
 
-    await expect(page.locator('i')).toHaveText(`${italics}.`);
+    await expect(editor.locator('i')).toHaveText(`${italics}.`);
     await expect(page.getByText(`Use ${italics}.`)).toBeVisible();
   });
 
@@ -117,11 +127,11 @@ test.describe('/editor', () => {
 
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use **${bold}**`);
-    await expect(page.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('strong')).toHaveText(bold);
 
     await editor.pressSequentially(` and _${italics}_.`);
-    await expect(page.locator('strong')).toHaveText(bold);
-    await expect(page.locator('i')).toHaveText(`${italics}.`);
+    await expect(editor.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('i')).toHaveText(`${italics}.`);
     await expect(page.getByText(`Use ${bold} and ${italics}.`)).toBeVisible();
   });
 
@@ -724,6 +734,28 @@ test.describe('/editor — RPG atom interaction', () => {
 
     await expect(editor.getByRole('checkbox')).toHaveCount(3);
     await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
+  });
+
+  test('Backspace peels one pip off a track, then removes the empty track', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/check 3');
+    await page.keyboard.press('Space');
+    await expect(editor.getByRole('checkbox')).toHaveCount(3);
+
+    // commitSlash leaves a trailing space; the first Backspace eats it,
+    // each following one peels a single pip.
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
+
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(1);
+
+    // The last pip falls through to the default — the whole track goes.
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(0);
   });
 });
 

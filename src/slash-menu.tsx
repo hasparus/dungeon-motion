@@ -2,32 +2,34 @@ import { cn } from "./cn";
 import { type SlashCommand, TrackPreview } from "./editor-atoms";
 
 interface SlashMenuProps {
+  // Left edge + width track the editor's text column; top sits below the caret.
+  anchor: { width: number; left: number; top: number; };
   commands: SlashCommand[];
   count: number | null;
   index: number;
   onPick: (command: SlashCommand) => void;
-  rect: DOMRect;
 }
 
 // Autocomplete popup for `/` commands. Keyboard navigation is owned by the
 // editor (it intercepts arrows/Enter while the menu is open); this component
-// only renders and handles pointer selection.
-export function SlashMenu({ commands, count, index, onPick, rect }: SlashMenuProps) {
+// only renders and handles pointer selection. font-sans keeps it reading as
+// tool UI rather than the editor's display serif.
+export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuProps) {
   if (commands.length === 0) return null;
 
   const active = Math.min(index, commands.length - 1);
 
   return (
     <div
-      className="fixed z-40 w-72 overflow-hidden rounded-lg border border-stone-300 bg-white py-1 shadow-xl dark:border-stone-700 dark:bg-stone-900"
+      className="fixed z-40 overflow-hidden rounded-lg border border-stone-300 bg-white py-1 font-sans shadow-xl dark:border-stone-700 dark:bg-stone-900"
       role="listbox"
-      style={{ left: rect.left, top: rect.bottom + 6 }}
+      style={{ width: anchor.width, left: anchor.left, top: anchor.top + 6 }}
     >
       {commands.map((command, i) => (
         <button
           aria-selected={i === active}
           className={cn(
-            "flex w-full items-center gap-2 px-3 py-1.5 text-left",
+            "flex w-full items-center gap-3 px-3 py-2 text-left",
             i === active && "bg-stone-100 dark:bg-stone-800",
           )}
           key={command.name}
@@ -39,7 +41,7 @@ export function SlashMenu({ commands, count, index, onPick, rect }: SlashMenuPro
           role="option"
           type="button"
         >
-          <span className="font-mono text-xs text-stone-400 dark:text-stone-500">
+          <span className="w-28 shrink-0 font-mono text-xs text-stone-400 dark:text-stone-500">
             /{command.name}
           </span>
           <span className="flex-1 text-sm text-stone-700 dark:text-stone-300">

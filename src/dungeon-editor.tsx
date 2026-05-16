@@ -33,13 +33,13 @@ function migrateStorage() {
   }
 }
 
+// Empty-state placeholder: a public-domain passage (Lord Dunsany, 1912) —
+// real human prose, not synthetic filler. Replaced the moment anyone types.
 const DEFAULT_HTML = [
-  "<h1>Untitled Expedition</h1>",
-  "<p>Start here. Sketch the village, the threat, the omen, the opening scene.</p>",
-  "<h2>What everyone knows</h2>",
-  "<p>The road is bad. The weather is worse. Something in the hills has started answering back.</p>",
-  "<ul><li>A witness saw torchlight where no one lives.</li><li>The chapel bell rang after midnight.</li><li>No one wants to say the old name out loud.</li></ul>",
-  "<p>Use <strong>bold</strong> for pressure and <em>italics</em> for whispers.</p>",
+  "<h1>The Hoard of the Gibbelins</h1>",
+  "<p>The Gibbelins eat, as is well known, nothing less good than man. Their evil tower is joined to Terra Cognita, to the lands we know, by a bridge.</p>",
+  "<p>Their hoard is beyond reason; avarice has no use for it; they have a separate cellar for emeralds and a separate cellar for sapphires; they have filled a hole with gold and dig it up when they need it.</p>",
+  "<p><i>— Lord Dunsany, The Book of Wonder (1912)</i></p>",
 ].join("");
 
 function escapeHtml(text: string) {
@@ -434,11 +434,13 @@ function applyTaskShorthand(root: HTMLElement) {
 }
 
 interface SlashState {
+  // Placement: left edge + width follow the editor's text column so the menu
+  // lines up with the paragraph; top follows the caret's line.
+  anchor: { width: number; left: number; top: number; };
   atStart: boolean;
   blockTag: string;
   count: number | null;
   query: string;
-  rect: DOMRect;
 }
 
 // The query reaches from the `/` to the caret: a command name, then an
@@ -446,6 +448,28 @@ interface SlashState {
 // boundary so prose like `and/or` and dates never open the menu.
 const SLASH_QUERY = /\/([a-z-]*)(?: +(\d+))? *$/;
 const SLASH_QUERY_BOUNDED = /(^|\s)\/([a-z-]*)(?: +(\d+))? *$/;
+
+// The .rpg-track immediately before a collapsed caret, if any — lets
+// Backspace peel one pip off a track instead of deleting the whole atom.
+function trackBeforeCaret(root: HTMLElement): HTMLElement | null {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!range.collapsed || !root.contains(range.startContainer)) return null;
+
+  let before: Node | null;
+  if (range.startContainer instanceof Text) {
+    if (range.startOffset !== 0) return null;
+    before = range.startContainer.previousSibling;
+  } else {
+    before = range.startContainer.childNodes[range.startOffset - 1] ?? null;
+  }
+
+  return before instanceof HTMLElement && before.classList.contains("rpg-track")
+    ? before
+    : null;
+}
 
 function readSlashState(root: HTMLElement): SlashState | null {
   const selection = globalThis.getSelection();
@@ -467,12 +491,15 @@ function readSlashState(root: HTMLElement): SlashState | null {
   const blockMatch = blockRange.toString().match(SLASH_QUERY_BOUNDED);
   if (!blockMatch) return null;
 
+  const caretRect = range.getBoundingClientRect();
+  const editorRect = root.getBoundingClientRect();
+
   return {
+    anchor: { width: editorRect.width, left: editorRect.left, top: caretRect.bottom },
     atStart: blockMatch[1] === "",
     blockTag: block.tagName,
     count: localMatch[2] ? Number.parseInt(localMatch[2], 10) : null,
     query: localMatch[1],
-    rect: range.getBoundingClientRect(),
   };
 }
 
@@ -510,10 +537,14 @@ function handleEnter(root: HTMLElement) {
     return true;
   }
 
-  if (block.tagName === "P" && /^[-*+]\s/.test(rawText)) {
+  // `- ` / `* ` / `+ ` start an unordered list; `1. ` an ordered one.
+  const bulletMatch = rawText.match(/^[-*+] /);
+  const listMatch = bulletMatch ?? rawText.match(/^\d+\. /);
+  if (block.tagName === "P" && listMatch) {
+    const prefix = listMatch[0];
     const item = document.createElement("li");
-    item.append(extractBeforeCaret(block, rawText.slice(0, 2)));
-    const list = document.createElement("ul");
+    item.append(extractBeforeCaret(block, prefix));
+    const list = document.createElement(bulletMatch ? "ul" : "ol");
     list.append(item);
 
     const paragraph = document.createElement("p");
@@ -766,6 +797,21 @@ export function DungeonEditor() {
               }
             }
 
+            // Backspace just before a track peels off its last pip rather
+            // than deleting the whole atom. The final pip falls through to
+            // the default (which removes the now-empty track).
+            if (event.key === "Backspace") {
+              const track = trackBeforeCaret(editor);
+              const pips = track ? [...track.querySelectorAll(".rpg-pip")] : [];
+              const lastPip = pips.at(-1);
+              if (lastPip && pips.length > 1) {
+                event.preventDefault();
+                lastPip.remove();
+                flushSave(editor);
+                return;
+              }
+            }
+
             if (event.key === "Enter" && handleEnter(editor)) {
               event.preventDefault();
               normalizeEmptyBlocks(editor);
@@ -882,20 +928,20 @@ export function DungeonEditor() {
       <button
         aria-haspopup="dialog"
         aria-label="Editor guide"
-        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center text-stone-300 transition-colors hover:text-stone-600 dark:text-stone-600 dark:hover:text-stone-300 print:hidden"
+        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-300 transition-colors hover:text-stone-600 focus-visible:text-stone-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-600 dark:hover:text-stone-300 dark:focus-visible:text-stone-300 print:hidden"
         onClick={() => setHelpOpen(true)}
         type="button"
       >
-        <span aria-hidden="true" className="text-lg leading-none">?</span>
+        <span aria-hidden="true" className="translate-y-px text-lg leading-none">?</span>
       </button>
 
       {slash && (
         <SlashMenu
+          anchor={slash.anchor}
           commands={matchSlashCommands(slash)}
           count={slash.count}
           index={slashIndex}
           onPick={(command) => commitSlash(command, slash.count)}
-          rect={slash.rect}
         />
       )}
 

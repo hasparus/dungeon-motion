@@ -41,8 +41,21 @@
   padding-left: 1.5rem;
 }
 
+/* Tailwind's preflight strips list markers; restore them for editor content. */
+.editor ul {
+  list-style: disc;
+}
+
+.editor ol {
+  list-style: decimal;
+}
+
 .editor li {
   margin: 0.375rem 0;
+}
+
+.editor li::marker {
+  color: var(--color-stone-400);
 }
 
 .editor strong {

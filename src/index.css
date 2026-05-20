@@ -5,6 +5,7 @@
 @theme {
   --font-serif: "Avara", Georgia, serif;
   --font-hand: "Caveat", cursive;
+  --font-text: "Crimson Text", Georgia, serif;
 }
 
 html {

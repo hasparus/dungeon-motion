@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
-const STORAGE_KEY = 'dungeon-motion-editor-document-v3';
-const SPELLCHECK_KEY = 'dungeon-motion-editor-spellcheck';
+const STORAGE_KEY = 'text-editor-document';
+const SPELLCHECK_KEY = 'text-editor-spellcheck';
 
 async function resetEditor(page: Page) {
   await page.evaluate(([docKey, spellKey]) => {

@@ -1,5 +1,5 @@
 /* RPG primitive atoms for the story editor (see editor-atoms.tsx and
-   dungeon-editor.tsx). Deliberately global and un-hashed: these class names
+   text-editor.tsx). Deliberately global and un-hashed: these class names
    appear verbatim in saved editor HTML and in help-modal previews, so they
    must survive the localStorage round-trip and must not be CSS-module-scoped. */
 

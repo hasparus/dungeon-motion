@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 
-import styles from "./dungeon-editor.module.css";
 import {
   buildPipElement,
   buildTrackElement,
@@ -11,15 +10,12 @@ import {
 } from "./editor-atoms";
 import { EditorHelpModal } from "./editor-help-modal";
 import { SlashMenu } from "./slash-menu";
+import styles from "./text-editor.module.css";
 import "./editor-atoms.css";
 
-const STORAGE_KEY = "dungeon-motion-editor-document-v3";
-const STORAGE_LEGACY_KEYS = [
-  "dungeon-motion-editor-document-v2",
-  "dungeon-motion-editor-document-v1",
-  "dungeon-motion-editor-document",
-];
-const SPELLCHECK_KEY = "dungeon-motion-editor-spellcheck";
+const STORAGE_KEY = "text-editor-document";
+const STORAGE_LEGACY_KEYS: string[] = [];
+const SPELLCHECK_KEY = "text-editor-spellcheck";
 
 function migrateStorage() {
   if (localStorage.getItem(STORAGE_KEY)) return;
@@ -33,13 +29,13 @@ function migrateStorage() {
   }
 }
 
-// Empty-state placeholder: a public-domain passage (Lord Dunsany, 1912) —
-// real human prose, not synthetic filler. Replaced the moment anyone types.
 const DEFAULT_HTML = [
-  "<h1>The Hoard of the Gibbelins</h1>",
-  "<p>The Gibbelins eat, as is well known, nothing less good than man. Their evil tower is joined to Terra Cognita, to the lands we know, by a bridge.</p>",
-  "<p>Their hoard is beyond reason; avarice has no use for it; they have a separate cellar for emeralds and a separate cellar for sapphires; they have filled a hole with gold and dig it up when they need it.</p>",
-  "<p><i>— Lord Dunsany, The Book of Wonder (1912)</i></p>",
+  "<h1>The Plan of the Parliament of Erl</h1>",
+  "<p>In their ruddy jackets of leather that reached to their knees the men of Erl appeared before their lord, the stately white-haired man in his long red room. He leaned in his carven chair and heard their spokesman.</p>",
+  '<p>"For seven hundred years the chiefs of your race have ruled us well; and their deeds are remembered by the minor minstrels, living on yet in their little tinkling songs. And yet the generations stream away, and there is no new thing."</p>',
+  '<p>"What would you?" said the lord.</p>',
+  '<p>"We would be ruled by a magic lord," they said.</p>',
+  "<p><i>— Lord Dunsany, The King of Elfland's Daughter (1924)</i></p>",
 ].join("");
 
 function escapeHtml(text: string) {
@@ -55,12 +51,29 @@ function plainTextToHtml(text: string) {
   return escapeHtml(text.replaceAll(/\r\n?/g, "\n")).replaceAll("\n", "<br>");
 }
 
-const ALLOWED_TAGS = new Set(["BR", "H1", "H2", "I", "LI", "OL", "P", "STRONG", "UL"]);
+const ALLOWED_TAGS = new Set([
+  "BR",
+  "H1",
+  "H2",
+  "I",
+  "LI",
+  "OL",
+  "P",
+  "STRONG",
+  "UL",
+]);
 const BLOCK_TAGS = new Set(["H1", "H2", "OL", "P", "UL"]);
 // Dropped entirely — subtree is discarded. Includes foreign-namespace
 // containers (SVG, MATH) whose descendants have lowercase tagNames and
 // can smuggle executable-looking elements past an uppercase-only check.
-const DROPPED_TAGS = new Set(["IFRAME", "MATH", "OBJECT", "SCRIPT", "STYLE", "SVG"]);
+const DROPPED_TAGS = new Set([
+  "IFRAME",
+  "MATH",
+  "OBJECT",
+  "SCRIPT",
+  "STYLE",
+  "SVG",
+]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
 // RPG primitive atoms (see editor-atoms.tsx) are embedded as elements carrying
@@ -93,7 +106,11 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
 
     // RPG atom: keep the element with its class and validated data-* only.
     const rpgClass = child.getAttribute("class");
-    if (rpgClass && RPG_ATOM_TAGS[rpgClass] === tag && child instanceof HTMLElement) {
+    if (
+      rpgClass &&
+      RPG_ATOM_TAGS[rpgClass] === tag &&
+      child instanceof HTMLElement
+    ) {
       const el = document.createElement(tag.toLowerCase());
       el.className = rpgClass;
       if (rpgClass === "rpg-pip" || rpgClass === "rpg-track") {
@@ -156,7 +173,10 @@ function getCurrentBlock(root: HTMLElement) {
 
   let node: Node | null = selection.anchorNode;
   while (node && node !== root) {
-    if (node instanceof HTMLElement && ["H1", "H2", "LI", "P"].includes(node.tagName)) {
+    if (
+      node instanceof HTMLElement &&
+      ["H1", "H2", "LI", "P"].includes(node.tagName)
+    ) {
       return node;
     }
     node = node.parentNode;
@@ -196,7 +216,10 @@ function findPrefixTextNode(block: HTMLElement, prefix: string): Text | null {
   return null;
 }
 
-function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragment {
+function extractBeforeCaret(
+  block: HTMLElement,
+  prefix: string,
+): DocumentFragment {
   const prefixNode = findPrefixTextNode(block, prefix);
   const selection = globalThis.getSelection();
 
@@ -204,7 +227,11 @@ function extractBeforeCaret(block: HTMLElement, prefix: string): DocumentFragmen
   if (prefixNode) range.setStart(prefixNode, prefix.length);
   else range.setStart(block, 0);
 
-  if (selection && selection.rangeCount > 0 && block.contains(selection.anchorNode)) {
+  if (
+    selection &&
+    selection.rangeCount > 0 &&
+    block.contains(selection.anchorNode)
+  ) {
     const caret = selection.getRangeAt(0);
     range.setEnd(caret.endContainer, caret.endOffset);
   } else {
@@ -227,7 +254,11 @@ function extractAfterCaret(block: HTMLElement): DocumentFragment {
   const selection = globalThis.getSelection();
   const range = document.createRange();
 
-  if (selection && selection.rangeCount > 0 && block.contains(selection.anchorNode)) {
+  if (
+    selection &&
+    selection.rangeCount > 0 &&
+    block.contains(selection.anchorNode)
+  ) {
     const caret = selection.getRangeAt(0);
     range.setStart(caret.endContainer, caret.endOffset);
   } else {
@@ -320,7 +351,8 @@ function transformInlineTextNodes(node: Node): boolean {
     const wrapper = document.createElement("span");
     wrapper.innerHTML = formatInline(raw);
 
-    if (wrapper.textContent === raw && wrapper.children.length === 0) return false;
+    if (wrapper.textContent === raw && wrapper.children.length === 0)
+      return false;
 
     node.replaceWith(...wrapper.childNodes);
     return true;
@@ -375,7 +407,8 @@ function normalizeEmptyBlocks(root: HTMLElement) {
 
 function applyInlineTransform(root: HTMLElement) {
   const block = getCurrentBlock(root);
-  if (!block || block.tagName === "LI" && block.closest("ul, ol") === null) return;
+  if (!block || (block.tagName === "LI" && block.closest("ul, ol") === null))
+    return;
 
   const raw = normalizeEditableText(block.textContent ?? "");
   let changed = false;
@@ -436,7 +469,7 @@ function applyTaskShorthand(root: HTMLElement) {
 interface SlashState {
   // Placement: left edge + width follow the editor's text column so the menu
   // lines up with the paragraph; top follows the caret's line.
-  anchor: { width: number; left: number; top: number; };
+  anchor: { width: number; left: number; top: number };
   atStart: boolean;
   blockTag: string;
   count: number | null;
@@ -479,7 +512,9 @@ function readSlashState(root: HTMLElement): SlashState | null {
   if (!range.collapsed || !(range.startContainer instanceof Text)) return null;
   if (!root.contains(range.startContainer)) return null;
 
-  const localMatch = range.startContainer.data.slice(0, range.startOffset).match(SLASH_QUERY);
+  const localMatch = range.startContainer.data
+    .slice(0, range.startOffset)
+    .match(SLASH_QUERY);
   if (!localMatch) return null;
 
   const block = getCurrentBlock(root);
@@ -495,7 +530,11 @@ function readSlashState(root: HTMLElement): SlashState | null {
   const editorRect = root.getBoundingClientRect();
 
   return {
-    anchor: { width: editorRect.width, left: editorRect.left, top: caretRect.bottom },
+    anchor: {
+      width: editorRect.width,
+      left: editorRect.left,
+      top: caretRect.bottom,
+    },
     atStart: blockMatch[1] === "",
     blockTag: block.tagName,
     count: localMatch[2] ? Number.parseInt(localMatch[2], 10) : null,
@@ -519,7 +558,10 @@ function handleEnter(root: HTMLElement) {
 
   const rawText = normalizeEditableText(block.textContent ?? "");
 
-  if (block.tagName === "P" && (rawText.startsWith("## ") || rawText.startsWith("# "))) {
+  if (
+    block.tagName === "P" &&
+    (rawText.startsWith("## ") || rawText.startsWith("# "))
+  ) {
     const prefix = rawText.startsWith("## ") ? "## " : "# ";
     const tag = prefix === "## " ? "h2" : "h1";
     const heading = document.createElement(tag);
@@ -562,7 +604,8 @@ function handleEnter(root: HTMLElement) {
 
   if (
     block.tagName === "P" &&
-    (block.classList.contains("rpg-monster-move") || block.classList.contains("rpg-question"))
+    (block.classList.contains("rpg-monster-move") ||
+      block.classList.contains("rpg-question"))
   ) {
     const className = block.classList.contains("rpg-monster-move")
       ? "rpg-monster-move"
@@ -677,7 +720,10 @@ export function DungeonEditor() {
     if (command.kind === "track" && command.shape) {
       // deleteRange is collapsed at the deletion point; insert the atom and a
       // trailing space there as one fragment, then drop the caret past both.
-      const track = buildTrackElement(command.shape, count ?? command.defaultCount);
+      const track = buildTrackElement(
+        command.shape,
+        count ?? command.defaultCount,
+      );
       // Non-breaking space: a plain trailing space next to an inline atom gets
       // collapsed away by contentEditable whitespace normalisation.
       const space = document.createTextNode("\u00A0");
@@ -710,11 +756,14 @@ export function DungeonEditor() {
     if (!editor) return;
 
     migrateStorage();
-    editor.innerHTML = sanitizeHtml(localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML);
+    editor.innerHTML = sanitizeHtml(
+      localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML,
+    );
 
     const handleBeforeUnload = () => flushSave(editor);
     globalThis.addEventListener("beforeunload", handleBeforeUnload);
-    return () => globalThis.removeEventListener("beforeunload", handleBeforeUnload);
+    return () =>
+      globalThis.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   useEffect(() => {
@@ -765,7 +814,8 @@ export function DungeonEditor() {
             if (slash) {
               const matches = matchSlashCommands(slash);
               if (matches.length > 0) {
-                const selected = matches[Math.min(slashIndex, matches.length - 1)];
+                const selected =
+                  matches[Math.min(slashIndex, matches.length - 1)];
 
                 if (event.key === "ArrowDown") {
                   event.preventDefault();
@@ -774,7 +824,9 @@ export function DungeonEditor() {
                 }
                 if (event.key === "ArrowUp") {
                   event.preventDefault();
-                  setSlashIndex((index) => (index - 1 + matches.length) % matches.length);
+                  setSlashIndex(
+                    (index) => (index - 1 + matches.length) % matches.length,
+                  );
                   return;
                 }
                 if (event.key === "Escape") {
@@ -829,7 +881,12 @@ export function DungeonEditor() {
             const cleanHtml = html ? sanitizeHtml(html) : plainTextToHtml(text);
 
             const selection = globalThis.getSelection();
-            if (!selection || selection.rangeCount === 0 || !editor.contains(selection.anchorNode)) return;
+            if (
+              !selection ||
+              selection.rangeCount === 0 ||
+              !editor.contains(selection.anchorNode)
+            )
+              return;
 
             const range = selection.getRangeAt(0);
             range.deleteContents();
@@ -870,7 +927,8 @@ export function DungeonEditor() {
             }
 
             const list = currentBlock.closest("ul, ol");
-            const insertAfter = currentBlock.tagName === "LI" && list ? list : currentBlock;
+            const insertAfter =
+              currentBlock.tagName === "LI" && list ? list : currentBlock;
             const shouldSplitTail = insertAfter === currentBlock;
 
             let tail: DocumentFragment | null = null;
@@ -916,12 +974,16 @@ export function DungeonEditor() {
 
         <div className="mt-4 flex justify-end print:hidden">
           <button
-            aria-label={spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"}
+            aria-label={
+              spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"
+            }
             className="flex size-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
             onClick={() => setSpellcheck((value) => !value)}
             type="button"
           >
-            <span aria-hidden="true" className="text-lg leading-none">{spellcheck ? "✓" : "✗"}</span>
+            <span aria-hidden="true" className="text-lg leading-none">
+              {spellcheck ? "✓" : "✗"}
+            </span>
           </button>
         </div>
       </div>
@@ -933,7 +995,12 @@ export function DungeonEditor() {
         onClick={() => setHelpOpen(true)}
         type="button"
       >
-        <span aria-hidden="true" className="translate-y-px text-lg leading-none">?</span>
+        <span
+          aria-hidden="true"
+          className="translate-y-px text-lg leading-none"
+        >
+          ?
+        </span>
       </button>
 
       {slash && (

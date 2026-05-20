@@ -723,21 +723,40 @@ test.describe('/editor — task lists', () => {
 });
 
 test.describe('/editor — RPG atom interaction', () => {
-  test('clicking a pip toggles its checked state', async ({ page }) => {
+  test('clicking a toggle toggles its checked state', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
     await editor.pressSequentially('/check 2');
     await page.keyboard.press('Space');
 
-    const pip = editor.getByRole('checkbox').first();
-    await expect(pip).not.toBeChecked();
+    const toggle = editor.getByRole('checkbox').first();
+    await expect(toggle).not.toBeChecked();
 
-    await pip.click();
-    await expect(pip).toBeChecked();
+    await toggle.click();
+    await expect(toggle).toBeChecked();
 
-    await pip.click();
-    await expect(pip).not.toBeChecked();
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+  });
+
+  test('keyboard: focused toggle responds to Space', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/check 2');
+    await page.keyboard.press('Space');
+
+    const toggle = editor.getByRole('checkbox').first();
+    await toggle.focus();
+    await expect(toggle).toBeFocused();
+    await expect(toggle).not.toBeChecked();
+
+    await page.keyboard.press('Space');
+    await expect(toggle).toBeChecked();
+
+    await page.keyboard.press('Enter');
+    await expect(toggle).not.toBeChecked();
   });
 
   test('inserted atoms and their checked state survive a reload', async ({ page }) => {
@@ -755,7 +774,7 @@ test.describe('/editor — RPG atom interaction', () => {
     await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
   });
 
-  test('Backspace peels one pip off a track, then removes the empty track', async ({ page }) => {
+  test('Backspace peels one toggle off a track, then removes the empty track', async ({ page }) => {
     await page.goto('/editor');
     const editor = await resetEditor(page);
 
@@ -764,7 +783,7 @@ test.describe('/editor — RPG atom interaction', () => {
     await expect(editor.getByRole('checkbox')).toHaveCount(3);
 
     // commitSlash leaves a trailing space; the first Backspace eats it,
-    // each following one peels a single pip.
+    // each following one peels a single toggle.
     await page.keyboard.press('Backspace');
     await page.keyboard.press('Backspace');
     await expect(editor.getByRole('checkbox')).toHaveCount(2);
@@ -772,7 +791,7 @@ test.describe('/editor — RPG atom interaction', () => {
     await page.keyboard.press('Backspace');
     await expect(editor.getByRole('checkbox')).toHaveCount(1);
 
-    // The last pip falls through to the default — the whole track goes.
+    // The last toggle falls through to the default — the whole track goes.
     await page.keyboard.press('Backspace');
     await expect(editor.getByRole('checkbox')).toHaveCount(0);
   });
@@ -782,7 +801,7 @@ test.describe('/editor — security: RPG atom sanitization', () => {
   test('round-trips RPG atoms from saved HTML', async ({ page }) => {
     await seedDocument(
       page,
-      '<p>before <span class="rpg-track" contenteditable="false"><span class="rpg-pip" role="checkbox" data-shape="circle" aria-checked="true"></span><span class="rpg-pip" role="checkbox" data-shape="circle" aria-checked="false"></span></span> after</p>',
+      '<p>before <span class="rpg-track" contenteditable="false"><button type="button" class="rpg-toggle" role="checkbox" data-shape="circle" aria-checked="true"></button><button type="button" class="rpg-toggle" role="checkbox" data-shape="circle" aria-checked="false"></button></span> after</p>',
     );
     await page.goto('/editor');
 
@@ -794,28 +813,28 @@ test.describe('/editor — security: RPG atom sanitization', () => {
     await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
   });
 
-  test('normalizes invalid pip attributes and drops unknown ones', async ({ page }) => {
+  test('normalizes invalid toggle attributes and drops unknown ones', async ({ page }) => {
     await seedDocument(
       page,
-      '<p><span class="rpg-pip" data-shape="javascript:" aria-checked="evil" data-bogus="x" onclick="globalThis.__xss = true">p</span></p>',
+      '<p><button class="rpg-toggle" data-shape="javascript:" aria-checked="evil" data-bogus="x" onclick="globalThis.__xss = true">p</button></p>',
     );
     await page.goto('/editor');
 
     const editor = page.getByRole('textbox', { name: 'Editor' });
     await expect(editor).toBeVisible();
 
-    const pip = editor.getByRole('checkbox');
-    await expect(pip).toHaveCount(1);
+    const toggle = editor.getByRole('checkbox');
+    await expect(toggle).toHaveCount(1);
     // Unknown shape falls back to the box checkbox; junk aria-checked → unchecked.
-    await expect(pip).toHaveAccessibleName('checkbox');
-    await expect(pip).not.toBeChecked();
-    await expect(pip).not.toHaveAttribute('data-bogus', /.*/);
-    await expect(pip).not.toHaveAttribute('onclick', /.*/);
+    await expect(toggle).toHaveAccessibleName('checkbox');
+    await expect(toggle).not.toBeChecked();
+    await expect(toggle).not.toHaveAttribute('data-bogus', /.*/);
+    await expect(toggle).not.toHaveAttribute('onclick', /.*/);
     expect(await page.evaluate(() => (globalThis as unknown as { __xss: boolean }).__xss)).toBe(false);
   });
 
   test('flattens a span whose class is not an exact RPG atom match', async ({ page }) => {
-    await seedDocument(page, '<p>aaa<span class="rpg-pip-fake">bbb</span>ccc</p>');
+    await seedDocument(page, '<p>aaa<span class="rpg-toggle-fake">bbb</span>ccc</p>');
     await page.goto('/editor');
 
     const editor = page.getByRole('textbox', { name: 'Editor' });

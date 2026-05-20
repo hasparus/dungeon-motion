@@ -54,10 +54,10 @@ export const SLASH_COMMANDS: SlashCommand[] = [
 
 const MAX_COUNT = 12;
 
-// Each pip is a binary toggle, so it carries role="checkbox" + aria-checked.
+// Each toggle is a binary toggle, so it carries role="checkbox" + aria-checked.
 // The label gives it an accessible name (a bare checkbox role has none) and
 // distinguishes the three track kinds for assistive tech and tests alike.
-export const PIP_LABEL: Record<Shape, string> = {
+export const TOGGLE_LABEL: Record<Shape, string> = {
   box: "checkbox",
   circle: "progress segment",
   diamond: "load segment",
@@ -68,15 +68,19 @@ export function clampCount(value: number): number {
   return Math.min(Math.max(Math.trunc(value), 1), MAX_COUNT);
 }
 
-export function buildPipElement(shape: Shape, filled: boolean): HTMLSpanElement {
-  const pip = document.createElement("span");
-  pip.className = "rpg-pip";
-  pip.dataset.shape = shape;
-  pip.setAttribute("role", "checkbox");
-  pip.setAttribute("aria-label", PIP_LABEL[shape]);
-  pip.setAttribute("aria-checked", filled ? "true" : "false");
-  pip.setAttribute("contenteditable", "false");
-  return pip;
+// Live, interactive toggle: a real <button> so keyboard users can Tab to it and
+// toggle with Space/Enter (a span carrying role=checkbox is a lie — Space
+// would just type a space into the surrounding contenteditable).
+export function buildToggleElement(shape: Shape, filled: boolean): HTMLButtonElement {
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "rpg-toggle";
+  toggle.dataset.shape = shape;
+  toggle.setAttribute("role", "checkbox");
+  toggle.setAttribute("aria-label", TOGGLE_LABEL[shape]);
+  toggle.setAttribute("aria-checked", filled ? "true" : "false");
+  toggle.setAttribute("contenteditable", "false");
+  return toggle;
 }
 
 export function buildTrackElement(shape: Shape, count: number): HTMLSpanElement {
@@ -84,7 +88,7 @@ export function buildTrackElement(shape: Shape, count: number): HTMLSpanElement 
   track.className = "rpg-track";
   track.setAttribute("contenteditable", "false");
   for (let i = 0; i < clampCount(count); i++) {
-    track.append(buildPipElement(shape, false));
+    track.append(buildToggleElement(shape, false));
   }
   return track;
 }
@@ -97,16 +101,16 @@ interface TrackPreviewProps {
 
 // Inert illustration for menus and docs — aria-hidden so screen readers get
 // the surrounding prose instead of a redundant run of checkbox announcements.
+// Toggles here are spans (decorative); the live editor builds them as buttons.
 export function TrackPreview({ count, filled = 0, shape }: TrackPreviewProps) {
   return (
     <span aria-hidden="true" className="rpg-track" data-preview="1">
       {Array.from({ length: clampCount(count) }, (_, i) => (
         <span
           aria-checked={i < filled ? "true" : "false"}
-          className="rpg-pip"
+          className="rpg-toggle"
           data-shape={shape}
           key={i}
-          role="checkbox"
         />
       ))}
     </span>

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  buildPipElement,
+  buildToggleElement,
   buildTrackElement,
-  PIP_LABEL,
   type Shape,
   SLASH_COMMANDS,
   type SlashCommand,
+  TOGGLE_LABEL,
 } from "./editor-atoms";
 import { EditorHelpModal } from "./editor-help-modal";
 import { SlashMenu } from "./slash-menu";
@@ -82,9 +82,9 @@ const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 // attributes survive, everything else is still dropped.
 const RPG_ATOM_TAGS: Record<string, string> = {
   "rpg-monster-move": "P",
-  "rpg-pip": "SPAN",
   "rpg-question": "P",
   "rpg-task": "LI",
+  "rpg-toggle": "BUTTON",
   "rpg-track": "SPAN",
 };
 const RPG_SHAPES = new Set(["box", "circle", "diamond"]);
@@ -113,15 +113,17 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
     ) {
       const el = document.createElement(tag.toLowerCase());
       el.className = rpgClass;
-      if (rpgClass === "rpg-pip" || rpgClass === "rpg-track") {
+      if (rpgClass === "rpg-toggle" || rpgClass === "rpg-track") {
         el.setAttribute("contenteditable", "false");
       }
-      if (rpgClass === "rpg-pip") {
+      if (rpgClass === "rpg-toggle") {
         const rawShape = child.dataset.shape ?? "";
         const shape = (RPG_SHAPES.has(rawShape) ? rawShape : "box") as Shape;
         el.dataset.shape = shape;
+        // Created as <button>; force type=button so it's never a submit.
+        el.setAttribute("type", "button");
         el.setAttribute("role", "checkbox");
-        el.setAttribute("aria-label", PIP_LABEL[shape]);
+        el.setAttribute("aria-label", TOGGLE_LABEL[shape]);
         el.setAttribute(
           "aria-checked",
           child.getAttribute("aria-checked") === "true" ? "true" : "false",
@@ -270,7 +272,7 @@ function extractAfterCaret(block: HTMLElement): DocumentFragment {
 }
 
 // Places the caret immediately after a block's first child — used for atoms
-// whose first child is a contenteditable=false pip the caret must clear.
+// whose first child is a contenteditable=false toggle the caret must clear.
 function setCaretAfterFirstChild(element: HTMLElement) {
   const selection = globalThis.getSelection();
   if (!selection) return;
@@ -444,7 +446,7 @@ function applyTaskShorthand(root: HTMLElement) {
 
     const item = document.createElement("li");
     item.className = "rpg-task";
-    item.append(buildPipElement("box", match[1].toLowerCase() === "x"));
+    item.append(buildToggleElement("box", match[1].toLowerCase() === "x"));
     const list = document.createElement("ul");
     list.append(item);
     block.replaceWith(list);
@@ -462,7 +464,7 @@ function applyTaskShorthand(root: HTMLElement) {
     prefixNode.data = prefixNode.data.slice(match[0].length);
     if (!prefixNode.data) prefixNode.remove();
     block.classList.add("rpg-task");
-    block.prepend(buildPipElement("box", match[1].toLowerCase() === "x"));
+    block.prepend(buildToggleElement("box", match[1].toLowerCase() === "x"));
   }
 }
 
@@ -483,7 +485,7 @@ const SLASH_QUERY = /\/([a-z-]*)(?: +(\d+))? *$/;
 const SLASH_QUERY_BOUNDED = /(^|\s)\/([a-z-]*)(?: +(\d+))? *$/;
 
 // The .rpg-track immediately before a collapsed caret, if any — lets
-// Backspace peel one pip off a track instead of deleting the whole atom.
+// Backspace peel one toggle off a track instead of deleting the whole atom.
 function trackBeforeCaret(root: HTMLElement): HTMLElement | null {
   const selection = globalThis.getSelection();
   if (!selection || selection.rangeCount === 0) return null;
@@ -636,7 +638,7 @@ function handleEnter(root: HTMLElement) {
     if (text && block.classList.contains("rpg-task")) {
       const item = document.createElement("li");
       item.className = "rpg-task";
-      item.append(buildPipElement("box", false));
+      item.append(buildToggleElement("box", false));
       const tail = extractAfterCaret(block);
       if (tail.childNodes.length > 0) item.append(tail);
       block.after(item);
@@ -788,11 +790,11 @@ export function DungeonEditor() {
             const editor = editorRef.current;
             if (!editor) return;
 
-            // Click a checkbox / progress / load pip to toggle it filled.
-            const pip = (event.target as HTMLElement).closest?.(".rpg-pip");
-            if (pip instanceof HTMLElement && editor.contains(pip)) {
-              const checked = pip.getAttribute("aria-checked") === "true";
-              pip.setAttribute("aria-checked", checked ? "false" : "true");
+            // Click — or keyboard Space/Enter on a focused button-toggle — toggles.
+            const toggle = (event.target as HTMLElement).closest?.(".rpg-toggle");
+            if (toggle instanceof HTMLElement && editor.contains(toggle)) {
+              const checked = toggle.getAttribute("aria-checked") === "true";
+              toggle.setAttribute("aria-checked", checked ? "false" : "true");
               flushSave(editor);
             }
             refreshSlash();
@@ -810,6 +812,10 @@ export function DungeonEditor() {
           onKeyDown={(event) => {
             const editor = editorRef.current;
             if (!editor) return;
+
+            // Keys on a focused toggle-button (Space, Enter, Tab) belong to the
+            // button — don't let editor handlers swallow them.
+            if ((event.target as HTMLElement).closest?.(".rpg-toggle")) return;
 
             if (slash) {
               const matches = matchSlashCommands(slash);
@@ -850,14 +856,14 @@ export function DungeonEditor() {
               }
             }
 
-            // Backspace just before a track peels off its last pip rather
-            // than deleting the whole atom. The final pip falls through to
+            // Backspace just before a track peels off its last toggle rather
+            // than deleting the whole atom. The final toggle falls through to
             // the default (which removes the now-empty track).
             if (event.key === "Backspace") {
               const track = trackBeforeCaret(editor);
-              const pips = track ? [...track.querySelectorAll(".rpg-pip")] : [];
-              const lastPip = pips.at(-1);
-              if (lastPip && pips.length > 1) {
+              const toggles = track ? [...track.querySelectorAll(".rpg-toggle")] : [];
+              const lastPip = toggles.at(-1);
+              if (lastPip && toggles.length > 1) {
                 event.preventDefault();
                 lastPip.remove();
                 flushSave(editor);
@@ -870,6 +876,14 @@ export function DungeonEditor() {
               normalizeEmptyBlocks(editor);
               flushSave(editor);
             }
+          }}
+          // Mouse-down on a toggle would normally pull focus onto the button and
+          // wipe the caret. Stop the default so clicks toggle without uprooting
+          // the writer; keyboard focus (Tab) still works because it doesn't
+          // go through mousedown.
+          onMouseDown={(event) => {
+            const toggle = (event.target as HTMLElement).closest?.(".rpg-toggle");
+            if (toggle) event.preventDefault();
           }}
           onPaste={(event) => {
             const editor = editorRef.current;

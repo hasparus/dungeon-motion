@@ -1,9 +1,9 @@
-// RPG primitive atoms shared by the story editor, its slash menu, and the
-// help modal. DOM builders produce the live, interactive elements embedded in
-// the contentEditable surface; TrackPreview renders the same look as inert
-// React for menus and documentation. Styling lives in editor-atoms.css.
+// Primitive atoms shared by the text editor, its slash menu, and the help
+// modal. DOM builders produce the live, interactive elements embedded in the
+// contentEditable surface; TrackPreview renders the same look as inert React
+// for menus and documentation. Styling lives in editor-atoms.css.
 
-export type Shape = "box" | "circle" | "diamond";
+export type Shape = "circle" | "rhomb" | "square";
 
 export interface SlashCommand {
   blockClass?: string;
@@ -17,50 +17,50 @@ export interface SlashCommand {
 export const SLASH_COMMANDS: SlashCommand[] = [
   {
     defaultCount: 3,
-    description: "Row of checkboxes",
+    description: "Checkboxes",
     kind: "track",
-    name: "check",
-    shape: "box",
+    name: "squares",
+    shape: "square",
   },
   {
     defaultCount: 4,
-    description: "Progress / countdown clock",
+    description: "Progress / counter",
     kind: "track",
-    name: "progress",
+    name: "circles",
     shape: "circle",
   },
   {
     defaultCount: 5,
-    description: "Load / supply track",
+    description: "Tally marks",
     kind: "track",
-    name: "load",
-    shape: "diamond",
+    name: "rhombs",
+    shape: "rhomb",
   },
   {
-    blockClass: "rpg-monster-move",
+    blockClass: "te-arrow",
     defaultCount: 0,
-    description: "Monster move line",
+    description: "Arrow line",
     kind: "block",
-    name: "monster-move",
+    name: "arrow",
   },
   {
-    blockClass: "rpg-question",
+    blockClass: "te-chevron",
     defaultCount: 0,
-    description: "GM question prompt",
+    description: "Chevron line",
     kind: "block",
-    name: "question",
+    name: "chevron",
   },
 ];
 
 const MAX_COUNT = 12;
 
-// Each toggle is a binary toggle, so it carries role="checkbox" + aria-checked.
-// The label gives it an accessible name (a bare checkbox role has none) and
-// distinguishes the three track kinds for assistive tech and tests alike.
+// Each toggle carries role="checkbox" + aria-checked; the label gives it an
+// accessible name (a bare checkbox role has none) and lets assistive tech and
+// tests tell the three track kinds apart.
 export const TOGGLE_LABEL: Record<Shape, string> = {
-  box: "checkbox",
-  circle: "progress segment",
-  diamond: "load segment",
+  circle: "circle",
+  rhomb: "rhomb",
+  square: "square",
 };
 
 export function clampCount(value: number): number {
@@ -68,27 +68,40 @@ export function clampCount(value: number): number {
   return Math.min(Math.max(Math.trunc(value), 1), MAX_COUNT);
 }
 
-// Live, interactive toggle: a real <button> so keyboard users can Tab to it and
+// Single source of truth for a live toggle's attributes — used both by the
+// builder below and by the sanitizer when it rebuilds a toggle from saved HTML.
+export function populateToggleElement(
+  toggle: HTMLElement,
+  shape: Shape,
+  checked: boolean,
+): void {
+  toggle.className = "te-toggle";
+  toggle.dataset.shape = shape;
+  toggle.setAttribute("type", "button");
+  toggle.setAttribute("role", "checkbox");
+  toggle.setAttribute("aria-label", TOGGLE_LABEL[shape]);
+  toggle.setAttribute("aria-checked", checked ? "true" : "false");
+  toggle.setAttribute("contenteditable", "false");
+}
+
+// Live, interactive toggle: a real <button> so keyboard users can focus it and
 // toggle with Space/Enter (a span carrying role=checkbox is a lie — Space
 // would just type a space into the surrounding contenteditable).
 export function buildToggleElement(shape: Shape, filled: boolean): HTMLButtonElement {
   const toggle = document.createElement("button");
-  toggle.type = "button";
-  toggle.className = "rpg-toggle";
-  toggle.dataset.shape = shape;
-  toggle.setAttribute("role", "checkbox");
-  toggle.setAttribute("aria-label", TOGGLE_LABEL[shape]);
-  toggle.setAttribute("aria-checked", filled ? "true" : "false");
-  toggle.setAttribute("contenteditable", "false");
+  populateToggleElement(toggle, shape, filled);
   return toggle;
 }
 
 export function buildTrackElement(shape: Shape, count: number): HTMLSpanElement {
   const track = document.createElement("span");
-  track.className = "rpg-track";
+  track.className = "te-track";
   track.setAttribute("contenteditable", "false");
   for (let i = 0; i < clampCount(count); i++) {
-    track.append(buildToggleElement(shape, false));
+    const toggle = buildToggleElement(shape, false);
+    // Roving tabindex: only the first toggle is a Tab stop; arrows move within.
+    if (i > 0) toggle.tabIndex = -1;
+    track.append(toggle);
   }
   return track;
 }
@@ -104,11 +117,11 @@ interface TrackPreviewProps {
 // Toggles here are spans (decorative); the live editor builds them as buttons.
 export function TrackPreview({ count, filled = 0, shape }: TrackPreviewProps) {
   return (
-    <span aria-hidden="true" className="rpg-track" data-preview="1">
+    <span aria-hidden="true" className="te-track" data-preview="1">
       {Array.from({ length: clampCount(count) }, (_, i) => (
         <span
           aria-checked={i < filled ? "true" : "false"}
-          className="rpg-toggle"
+          className="te-toggle"
           data-shape={shape}
           key={i}
         />

@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import {
   buildToggleElement,
   buildTrackElement,
+  populateToggleElement,
   type Shape,
   SLASH_COMMANDS,
   type SlashCommand,
-  TOGGLE_LABEL,
 } from "./editor-atoms";
 import { EditorHelpModal } from "./editor-help-modal";
 import { SlashMenu } from "./slash-menu";
@@ -76,18 +76,19 @@ const DROPPED_TAGS = new Set([
 ]);
 const TAG_RENAME: Record<string, string> = { B: "STRONG", EM: "I" };
 
-// RPG primitive atoms (see editor-atoms.tsx) are embedded as elements carrying
-// a known class. The sanitizer must preserve them across the localStorage
-// round-trip — but strictly: only the class plus a small set of validated data
-// attributes survive, everything else is still dropped.
-const RPG_ATOM_TAGS: Record<string, string> = {
-  "rpg-monster-move": "P",
-  "rpg-question": "P",
-  "rpg-task": "LI",
-  "rpg-toggle": "BUTTON",
-  "rpg-track": "SPAN",
+// Editor atoms (see editor-atoms.tsx) are embedded as elements carrying a
+// known class. The sanitizer must preserve them across the localStorage
+// round-trip — but strictly: only the class plus a small set of validated
+// attributes survive, everything else is still dropped. The class must be
+// *exactly* the atom name (a second class flips it back to the flatten path).
+const ATOM_TAGS: Record<string, string> = {
+  "te-arrow": "P",
+  "te-chevron": "P",
+  "te-task": "LI",
+  "te-toggle": "BUTTON",
+  "te-track": "SPAN",
 };
-const RPG_SHAPES = new Set(["box", "circle", "diamond"]);
+const SHAPES = new Set(["circle", "rhomb", "square"]);
 
 function sanitizeInto(source: ParentNode, target: ParentNode) {
   for (const child of source.childNodes) {
@@ -104,29 +105,25 @@ function sanitizeInto(source: ParentNode, target: ParentNode) {
 
     if (DROPPED_TAGS.has(tag)) continue;
 
-    // RPG atom: keep the element with its class and validated data-* only.
-    const rpgClass = child.getAttribute("class");
+    // Editor atom: keep the element with its class and validated attrs only.
+    const atomClass = child.getAttribute("class");
     if (
-      rpgClass &&
-      RPG_ATOM_TAGS[rpgClass] === tag &&
+      atomClass &&
+      ATOM_TAGS[atomClass] === tag &&
       child instanceof HTMLElement
     ) {
       const el = document.createElement(tag.toLowerCase());
-      el.className = rpgClass;
-      if (rpgClass === "rpg-toggle" || rpgClass === "rpg-track") {
+      el.className = atomClass;
+      if (atomClass === "te-track") {
         el.setAttribute("contenteditable", "false");
       }
-      if (rpgClass === "rpg-toggle") {
+      if (atomClass === "te-toggle") {
         const rawShape = child.dataset.shape ?? "";
-        const shape = (RPG_SHAPES.has(rawShape) ? rawShape : "box") as Shape;
-        el.dataset.shape = shape;
-        // Created as <button>; force type=button so it's never a submit.
-        el.setAttribute("type", "button");
-        el.setAttribute("role", "checkbox");
-        el.setAttribute("aria-label", TOGGLE_LABEL[shape]);
-        el.setAttribute(
-          "aria-checked",
-          child.getAttribute("aria-checked") === "true" ? "true" : "false",
+        const shape = (SHAPES.has(rawShape) ? rawShape : "square") as Shape;
+        populateToggleElement(
+          el,
+          shape,
+          child.getAttribute("aria-checked") === "true",
         );
       }
       target.append(el);
@@ -253,6 +250,10 @@ function extractBeforeCaret(
 }
 
 function extractAfterCaret(block: HTMLElement): DocumentFragment {
+  // An empty block has nothing after the caret — and setEndAfter(block) would
+  // reach past the block boundary, so bail with an empty fragment.
+  if (!block.lastChild) return document.createDocumentFragment();
+
   const selection = globalThis.getSelection();
   const range = document.createRange();
 
@@ -266,7 +267,7 @@ function extractAfterCaret(block: HTMLElement): DocumentFragment {
   } else {
     range.setStart(block, block.childNodes.length);
   }
-  range.setEndAfter(block.lastChild ?? block);
+  range.setEndAfter(block.lastChild);
 
   return range.extractContents();
 }
@@ -286,6 +287,73 @@ function setCaretAfterFirstChild(element: HTMLElement) {
 
 function moveChildrenInto(source: ParentNode, target: ParentNode) {
   while (source.firstChild) target.append(source.firstChild);
+}
+
+// Roving tabindex: each track keeps exactly one toggle in the Tab order, so
+// Tab enters/leaves the group and ArrowLeft/Right move within it.
+function normalizeTrackTabindexes(root: HTMLElement) {
+  for (const track of root.querySelectorAll(".te-track")) {
+    const toggles = track.querySelectorAll<HTMLElement>(".te-toggle");
+    for (const [index, toggle] of toggles.entries()) {
+      toggle.tabIndex = index === 0 ? 0 : -1;
+    }
+  }
+}
+
+interface UndoSnapshot {
+  html: string;
+  selection: { offset: number; path: number[] } | null;
+}
+
+// Records the caret as a child-index path from `root` — survives an
+// innerHTML restore because the restored DOM is byte-identical.
+function captureSelection(root: HTMLElement): UndoSnapshot["selection"] {
+  const selection = globalThis.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+
+  const range = selection.getRangeAt(0);
+  if (!root.contains(range.startContainer)) return null;
+
+  const path: number[] = [];
+  let node: Node = range.startContainer;
+  while (node !== root) {
+    const parent: ParentNode | null = node.parentNode;
+    if (!parent) return null;
+    path.unshift([...parent.childNodes].indexOf(node as ChildNode));
+    node = parent;
+  }
+  return { offset: range.startOffset, path };
+}
+
+function restoreSelection(
+  root: HTMLElement,
+  snapshot: UndoSnapshot["selection"],
+) {
+  if (!snapshot) return;
+
+  let node: Node = root;
+  for (const index of snapshot.path) {
+    const child: ChildNode | undefined = node.childNodes[index];
+    if (!child) return;
+    node = child;
+  }
+
+  const limit =
+    node.nodeType === Node.TEXT_NODE
+      ? (node.textContent ?? "").length
+      : node.childNodes.length;
+  const selection = globalThis.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.setStart(node, Math.min(snapshot.offset, limit));
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function captureSnapshot(root: HTMLElement): UndoSnapshot {
+  return { html: root.innerHTML, selection: captureSelection(root) };
 }
 
 function saveImmediate(root: HTMLElement) {
@@ -433,45 +501,51 @@ function applyInlineTransform(root: HTMLElement) {
 
 // `- [ ] ` / `- [x] ` shorthand. Fires on input the moment the trailing space
 // completes the marker, so the checkbox appears immediately rather than on
-// Enter like the other block transforms.
-function applyTaskShorthand(root: HTMLElement) {
+// Enter like the other block transforms. Returns the pre-transform snapshot
+// when it fired (for custom undo), or null when nothing changed.
+function applyTaskShorthand(root: HTMLElement): UndoSnapshot | null {
   const block = getCurrentBlock(root);
-  if (!block) return;
+  if (!block) return null;
 
   const text = normalizeEditableText(block.textContent ?? "");
 
   if (block.tagName === "P") {
     const match = text.match(/^[-*+] \[([ xX])\] $/);
-    if (!match) return;
+    if (!match) return null;
 
+    const snapshot = captureSnapshot(root);
     const item = document.createElement("li");
-    item.className = "rpg-task";
-    item.append(buildToggleElement("box", match[1].toLowerCase() === "x"));
+    item.className = "te-task";
+    item.append(buildToggleElement("square", match[1].toLowerCase() === "x"));
     const list = document.createElement("ul");
     list.append(item);
     block.replaceWith(list);
     setCaretAfterFirstChild(item);
-    return;
+    return snapshot;
   }
 
-  if (block.tagName === "LI" && !block.classList.contains("rpg-task")) {
+  if (block.tagName === "LI" && !block.classList.contains("te-task")) {
     const match = text.match(/^\[([ xX])\] /);
-    if (!match) return;
+    if (!match) return null;
 
     const prefixNode = findPrefixTextNode(block, match[0]);
-    if (!prefixNode) return;
+    if (!prefixNode) return null;
 
+    const snapshot = captureSnapshot(root);
     prefixNode.data = prefixNode.data.slice(match[0].length);
     if (!prefixNode.data) prefixNode.remove();
-    block.classList.add("rpg-task");
-    block.prepend(buildToggleElement("box", match[1].toLowerCase() === "x"));
+    block.classList.add("te-task");
+    block.prepend(buildToggleElement("square", match[1].toLowerCase() === "x"));
+    return snapshot;
   }
+
+  return null;
 }
 
 interface SlashState {
   // Placement: left edge + width follow the editor's text column so the menu
   // lines up with the paragraph; top follows the caret's line.
-  anchor: { width: number; left: number; top: number };
+  anchor: { width: number; left: number; top: number; };
   atStart: boolean;
   blockTag: string;
   count: number | null;
@@ -483,8 +557,10 @@ interface SlashState {
 // boundary so prose like `and/or` and dates never open the menu.
 const SLASH_QUERY = /\/([a-z-]*)(?: +(\d+))? *$/;
 const SLASH_QUERY_BOUNDED = /(^|\s)\/([a-z-]*)(?: +(\d+))? *$/;
+const SLASH_MENU_ID = "te-slash-menu";
+const slashOptionId = (name: string) => `te-slash-option-${name}`;
 
-// The .rpg-track immediately before a collapsed caret, if any — lets
+// The .te-track immediately before a collapsed caret, if any — lets
 // Backspace peel one toggle off a track instead of deleting the whole atom.
 function trackBeforeCaret(root: HTMLElement): HTMLElement | null {
   const selection = globalThis.getSelection();
@@ -501,7 +577,7 @@ function trackBeforeCaret(root: HTMLElement): HTMLElement | null {
     before = range.startContainer.childNodes[range.startOffset - 1] ?? null;
   }
 
-  return before instanceof HTMLElement && before.classList.contains("rpg-track")
+  return before instanceof HTMLElement && before.classList.contains("te-track")
     ? before
     : null;
 }
@@ -606,12 +682,12 @@ function handleEnter(root: HTMLElement) {
 
   if (
     block.tagName === "P" &&
-    (block.classList.contains("rpg-monster-move") ||
-      block.classList.contains("rpg-question"))
+    (block.classList.contains("te-arrow") ||
+      block.classList.contains("te-chevron"))
   ) {
-    const className = block.classList.contains("rpg-monster-move")
-      ? "rpg-monster-move"
-      : "rpg-question";
+    const className = block.classList.contains("te-arrow")
+      ? "te-arrow"
+      : "te-chevron";
 
     // Enter on an empty styled line exits it back to a plain paragraph.
     if (!rawText.trim()) {
@@ -635,10 +711,10 @@ function handleEnter(root: HTMLElement) {
     const text = rawText.trim();
 
     // Continue a task list: a fresh item carries its own checkbox.
-    if (text && block.classList.contains("rpg-task")) {
+    if (text && block.classList.contains("te-task")) {
       const item = document.createElement("li");
-      item.className = "rpg-task";
-      item.append(buildToggleElement("box", false));
+      item.className = "te-task";
+      item.append(buildToggleElement("square", false));
       const tail = extractAfterCaret(block);
       if (tail.childNodes.length > 0) item.append(tail);
       block.after(item);
@@ -673,6 +749,10 @@ function handleEnter(root: HTMLElement) {
 
 export function DungeonEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
+  // One-slot custom undo: the editor's transforms (slash commands, `- [ ] `,
+  // headings, lists) bypass the browser's history, so Ctrl/Cmd+Z restores
+  // this pre-transform snapshot. Cleared once the writer types past it.
+  const pendingUndo = useRef<UndoSnapshot | null>(null);
   const [spellcheck, setSpellcheck] = useState(() => {
     const saved = localStorage.getItem(SPELLCHECK_KEY);
     return saved === null ? true : saved === "true";
@@ -688,6 +768,17 @@ export function DungeonEditor() {
     const next = readSlashState(editor);
     setSlash(next && matchSlashCommands(next).length > 0 ? next : null);
     setSlashIndex(0);
+  }
+
+  function undoTransform(editor: HTMLElement) {
+    const snapshot = pendingUndo.current;
+    if (!snapshot) return;
+    editor.innerHTML = snapshot.html;
+    normalizeTrackTabindexes(editor);
+    restoreSelection(editor, snapshot.selection);
+    pendingUndo.current = null;
+    setSlash(null);
+    flushSave(editor);
   }
 
   // Replaces the typed `/command` query with its rendered atom.
@@ -713,6 +804,8 @@ export function DungeonEditor() {
       setSlash(null);
       return;
     }
+
+    const snapshot = captureSnapshot(editor);
 
     const deleteRange = document.createRange();
     deleteRange.setStart(node, range.startOffset - localMatch[0].length);
@@ -742,11 +835,12 @@ export function DungeonEditor() {
       const block = getCurrentBlock(editor);
       if (block && block.tagName === "P") {
         // Replace the line kind rather than stacking marker classes.
-        block.classList.remove("rpg-monster-move", "rpg-question");
+        block.classList.remove("te-arrow", "te-chevron");
         block.classList.add(command.blockClass);
       }
     }
 
+    pendingUndo.current = snapshot;
     setSlash(null);
     setSlashIndex(0);
     normalizeEmptyBlocks(editor);
@@ -761,6 +855,7 @@ export function DungeonEditor() {
     editor.innerHTML = sanitizeHtml(
       localStorage.getItem(STORAGE_KEY) || DEFAULT_HTML,
     );
+    normalizeTrackTabindexes(editor);
 
     const handleBeforeUnload = () => flushSave(editor);
     globalThis.addEventListener("beforeunload", handleBeforeUnload);
@@ -768,14 +863,44 @@ export function DungeonEditor() {
       globalThis.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
+  // A caret move that fires no `input` event (arrow keys, clicks) still has to
+  // refresh the slash menu, otherwise it lingers stale at the old anchor.
+  useEffect(() => {
+    let scheduled = 0;
+    const handler = () => {
+      if (scheduled) return;
+      scheduled = requestAnimationFrame(() => {
+        scheduled = 0;
+        const editor = editorRef.current;
+        const anchor = globalThis.getSelection()?.anchorNode ?? null;
+        if (editor && anchor && editor.contains(anchor)) refreshSlash();
+      });
+    };
+    document.addEventListener("selectionchange", handler);
+    return () => {
+      document.removeEventListener("selectionchange", handler);
+      if (scheduled) cancelAnimationFrame(scheduled);
+    };
+  }, []);
+
   useEffect(() => {
     localStorage.setItem(SPELLCHECK_KEY, String(spellcheck));
   }, [spellcheck]);
+
+  const slashCommands = slash ? matchSlashCommands(slash) : [];
+  const slashActiveId =
+    slashCommands.length > 0
+      ? slashOptionId(
+          slashCommands[Math.min(slashIndex, slashCommands.length - 1)].name,
+        )
+      : undefined;
 
   return (
     <main className="min-h-screen">
       <div className="mx-auto max-w-3xl px-4 py-24 md:px-6 print:max-w-none print:px-0 print:py-0">
         <div
+          aria-activedescendant={slash ? slashActiveId : undefined}
+          aria-controls={slash ? SLASH_MENU_ID : undefined}
           aria-label="Editor"
           autoCapitalize={spellcheck ? "sentences" : "off"}
           autoCorrect={spellcheck ? "on" : "off"}
@@ -790,8 +915,8 @@ export function DungeonEditor() {
             const editor = editorRef.current;
             if (!editor) return;
 
-            // Click — or keyboard Space/Enter on a focused button-toggle — toggles.
-            const toggle = (event.target as HTMLElement).closest?.(".rpg-toggle");
+            // Click — or keyboard Space/Enter on a focused toggle — toggles it.
+            const toggle = (event.target as HTMLElement).closest?.(".te-toggle");
             if (toggle instanceof HTMLElement && editor.contains(toggle)) {
               const checked = toggle.getAttribute("aria-checked") === "true";
               toggle.setAttribute("aria-checked", checked ? "false" : "true");
@@ -799,12 +924,26 @@ export function DungeonEditor() {
             }
             refreshSlash();
           }}
+          onFocus={(event) => {
+            // Keep the track's roving tabindex on whichever toggle was reached.
+            const toggle = (event.target as HTMLElement).closest?.(".te-toggle");
+            if (!(toggle instanceof HTMLElement)) return;
+            const track = toggle.closest(".te-track");
+            if (!track) return;
+            for (const sibling of track.querySelectorAll<HTMLElement>(
+              ".te-toggle",
+            )) {
+              sibling.tabIndex = sibling === toggle ? 0 : -1;
+            }
+          }}
           onInput={(event) => {
             const editor = editorRef.current;
             if (!editor) return;
             if ((event.nativeEvent as InputEvent).isComposing) return;
             applyInlineTransform(editor);
-            applyTaskShorthand(editor);
+            // A task transform stores its undo snapshot; plain typing (null)
+            // clears any pending one — the writer has moved past it.
+            pendingUndo.current = applyTaskShorthand(editor);
             normalizeEmptyBlocks(editor);
             refreshSlash();
             save(editor);
@@ -813,9 +952,40 @@ export function DungeonEditor() {
             const editor = editorRef.current;
             if (!editor) return;
 
-            // Keys on a focused toggle-button (Space, Enter, Tab) belong to the
-            // button — don't let editor handlers swallow them.
-            if ((event.target as HTMLElement).closest?.(".rpg-toggle")) return;
+            // Ctrl/Cmd+Z reverts the most recent editor transform.
+            if (
+              (event.metaKey || event.ctrlKey) &&
+              !event.shiftKey &&
+              event.key.toLowerCase() === "z" &&
+              pendingUndo.current
+            ) {
+              event.preventDefault();
+              undoTransform(editor);
+              return;
+            }
+
+            // Keys on a focused toggle: arrows rove within the track, the rest
+            // (Space, Enter, Tab) are left to the native button.
+            const onToggle = (event.target as HTMLElement).closest?.(
+              ".te-toggle",
+            );
+            if (onToggle) {
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+                const track = onToggle.closest(".te-track");
+                if (track) {
+                  const toggles = [
+                    ...track.querySelectorAll<HTMLButtonElement>(".te-toggle"),
+                  ];
+                  const i = toggles.indexOf(onToggle as HTMLButtonElement);
+                  const step = event.key === "ArrowRight" ? 1 : -1;
+                  toggles[
+                    (i + step + toggles.length) % toggles.length
+                  ]?.focus();
+                }
+              }
+              return;
+            }
 
             if (slash) {
               const matches = matchSlashCommands(slash);
@@ -840,10 +1010,15 @@ export function DungeonEditor() {
                   setSlash(null);
                   return;
                 }
+                // Tab dismisses the menu and is left to move focus normally.
+                if (event.key === "Tab") {
+                  setSlash(null);
+                  return;
+                }
                 // A track command needs its count before it can be committed;
                 // until then, let Space through so the number can be typed.
                 const ready = selected.kind === "block" || slash.count !== null;
-                if (event.key === "Enter" || event.key === "Tab") {
+                if (event.key === "Enter") {
                   event.preventDefault();
                   commitSlash(selected, slash.count);
                   return;
@@ -861,28 +1036,35 @@ export function DungeonEditor() {
             // the default (which removes the now-empty track).
             if (event.key === "Backspace") {
               const track = trackBeforeCaret(editor);
-              const toggles = track ? [...track.querySelectorAll(".rpg-toggle")] : [];
-              const lastPip = toggles.at(-1);
-              if (lastPip && toggles.length > 1) {
+              const toggles = track
+                ? [...track.querySelectorAll(".te-toggle")]
+                : [];
+              const last = toggles.at(-1);
+              if (last && toggles.length > 1) {
                 event.preventDefault();
-                lastPip.remove();
+                last.remove();
                 flushSave(editor);
                 return;
               }
             }
 
-            if (event.key === "Enter" && handleEnter(editor)) {
-              event.preventDefault();
-              normalizeEmptyBlocks(editor);
-              flushSave(editor);
+            if (event.key === "Enter") {
+              const snapshot = captureSnapshot(editor);
+              if (handleEnter(editor)) {
+                event.preventDefault();
+                normalizeEmptyBlocks(editor);
+                pendingUndo.current = snapshot;
+                flushSave(editor);
+              }
             }
           }}
-          // Mouse-down on a toggle would normally pull focus onto the button and
-          // wipe the caret. Stop the default so clicks toggle without uprooting
-          // the writer; keyboard focus (Tab) still works because it doesn't
-          // go through mousedown.
+          // Mouse-down on a toggle would normally pull focus onto the button
+          // and wipe the caret. Stop the default so clicks toggle without
+          // uprooting the writer; keyboard focus still works (no mousedown).
           onMouseDown={(event) => {
-            const toggle = (event.target as HTMLElement).closest?.(".rpg-toggle");
+            const toggle = (event.target as HTMLElement).closest?.(
+              ".te-toggle",
+            );
             if (toggle) event.preventDefault();
           }}
           onPaste={(event) => {
@@ -890,6 +1072,7 @@ export function DungeonEditor() {
             if (!editor) return;
 
             event.preventDefault();
+            pendingUndo.current = null;
             const html = event.clipboardData.getData("text/html");
             const text = event.clipboardData.getData("text/plain");
             const cleanHtml = html ? sanitizeHtml(html) : plainTextToHtml(text);
@@ -1003,9 +1186,10 @@ export function DungeonEditor() {
       </div>
 
       <button
+        aria-expanded={helpOpen}
         aria-haspopup="dialog"
         aria-label="Editor guide"
-        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-300 transition-colors hover:text-stone-600 focus-visible:text-stone-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-600 dark:hover:text-stone-300 dark:focus-visible:text-stone-300 print:hidden"
+        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:text-stone-800 focus-visible:text-stone-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-400 dark:hover:text-stone-200 dark:focus-visible:text-stone-200 print:hidden"
         onClick={() => setHelpOpen(true)}
         type="button"
       >
@@ -1019,11 +1203,14 @@ export function DungeonEditor() {
 
       {slash && (
         <SlashMenu
+          activeId={slashActiveId}
           anchor={slash.anchor}
-          commands={matchSlashCommands(slash)}
+          commands={slashCommands}
           count={slash.count}
+          id={SLASH_MENU_ID}
           index={slashIndex}
           onPick={(command) => commitSlash(command, slash.count)}
+          optionId={slashOptionId}
         />
       )}
 

@@ -2,19 +2,33 @@ import { cn } from "./cn";
 import { type SlashCommand, TrackPreview } from "./editor-atoms";
 
 interface SlashMenuProps {
+  // The id of the currently highlighted option — echoed by the editor's
+  // aria-activedescendant so assistive tech tracks the selection.
+  activeId: string | undefined;
   // Left edge + width track the editor's text column; top sits below the caret.
   anchor: { width: number; left: number; top: number; };
   commands: SlashCommand[];
   count: number | null;
+  id: string;
   index: number;
   onPick: (command: SlashCommand) => void;
+  optionId: (name: string) => string;
 }
 
 // Autocomplete popup for `/` commands. Keyboard navigation is owned by the
 // editor (it intercepts arrows/Enter while the menu is open); this component
 // only renders and handles pointer selection. font-text matches the editor's
 // reading serif (Crimson Text).
-export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuProps) {
+export function SlashMenu({
+  id,
+  activeId,
+  anchor,
+  commands,
+  count,
+  index,
+  onPick,
+  optionId,
+}: SlashMenuProps) {
   if (commands.length === 0) return null;
 
   const active = Math.min(index, commands.length - 1);
@@ -22,6 +36,7 @@ export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuP
   return (
     <div
       className="fixed z-40 overflow-hidden rounded-lg border border-stone-300 bg-white font-text shadow-xl dark:border-stone-700 dark:bg-stone-900"
+      id={id}
       role="listbox"
       style={{ width: anchor.width, left: anchor.left, top: anchor.top + 6 }}
     >
@@ -30,8 +45,9 @@ export function SlashMenu({ anchor, commands, count, index, onPick }: SlashMenuP
           aria-selected={i === active}
           className={cn(
             "flex w-full items-center gap-3 px-3 py-2 text-left",
-            i === active && "bg-stone-100 dark:bg-stone-800",
+            optionId(command.name) === activeId && "bg-stone-100 dark:bg-stone-800",
           )}
+          id={optionId(command.name)}
           key={command.name}
           // Pointer-down (not click) so the editor keeps its selection.
           onMouseDown={(event) => {

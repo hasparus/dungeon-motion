@@ -36,6 +36,7 @@ function Section({ children, title }: { children: ReactNode; title: string }) {
 // can play before the browser hides it.
 export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -49,15 +50,17 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
   return (
     <dialog
       aria-label="Editor guide"
-      className="editor-help-dialog w-[calc(100vw-2rem)] max-w-lg rounded-xl border border-stone-200 bg-white text-stone-900 shadow-2xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 print:hidden"
-      // A click whose target is the dialog itself landed on the ::backdrop.
+      className="te-help-dialog w-[calc(100vw-2rem)] max-w-lg rounded-xl border border-stone-200 bg-white text-stone-900 shadow-2xl dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 print:hidden"
+      // The inner div covers the whole visible card; a click outside it landed
+      // on the ::backdrop (or the dialog's own margin), so dismiss.
       onClick={(event) => {
-        if (event.target === dialogRef.current) onClose();
+        const inner = innerRef.current;
+        if (inner && !inner.contains(event.target as Node)) onClose();
       }}
       onClose={onClose}
       ref={dialogRef}
     >
-      <div className="p-6">
+      <div className="p-6" ref={innerRef}>
         <div className="flex items-start justify-between gap-4">
           <h2 className="m-0 font-serif text-2xl tracking-wide">Editor guide</h2>
           <button
@@ -70,8 +73,8 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
           </button>
         </div>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          Type <code className="font-mono">/</code> for the command menu. Click any box, circle
-          or diamond to fill it in.
+          Type <code className="font-mono">/</code> for the command menu. Click any square,
+          circle or rhomb to fill it in.
         </p>
 
         <Section title="Text">
@@ -91,7 +94,7 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
           <Row code="- [ ] ">
             <span className="inline-flex items-center gap-2">
               Checklist item — click to tick
-              <TrackPreview count={1} shape="box" />
+              <TrackPreview count={1} shape="square" />
             </span>
           </Row>
           {trackCommands.map((command) => (
@@ -106,12 +109,12 @@ export function EditorHelpModal({ onClose, open }: EditorHelpModalProps) {
           ))}
         </Section>
 
-        <Section title="Game elements">
-          <Row code="/monster-move">
-            <p className="rpg-monster-move m-0">Lash out when cornered.</p>
+        <Section title="Marker lines">
+          <Row code="/arrow">
+            <p className="te-arrow m-0">A line that points to something.</p>
           </Row>
-          <Row code="/question">
-            <p className="rpg-question m-0">What does the village fear most?</p>
+          <Row code="/chevron">
+            <p className="te-chevron m-0">A quieter line, set aside.</p>
           </Row>
         </Section>
       </div>

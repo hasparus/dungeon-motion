@@ -3,7 +3,7 @@
    appear verbatim in saved editor HTML and in help-modal previews, so they
    must survive the localStorage round-trip and must not be CSS-module-scoped. */
 
-.rpg-track {
+.te-track {
   display: inline-flex;
   align-items: center;
   /* Match the main page's progress-dot rhythm (move-card.tsx uses gap-0.75,
@@ -16,7 +16,7 @@
 
 /* Toggles are real <button>s in the editor (see editor-atoms.tsx) so reset the
    UA button chrome here; spans in TrackPreview inherit only the visual rules. */
-.rpg-toggle {
+.te-toggle {
   appearance: none;
   position: relative;
   display: inline-block;
@@ -35,24 +35,24 @@
   transition: background-color 0.12s ease;
 }
 
-.rpg-toggle:hover {
+.te-toggle:hover {
   background-color: color-mix(in srgb, currentColor 16%, transparent);
 }
 
-.rpg-toggle:focus-visible {
+.te-toggle:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 2px;
 }
 
-.rpg-toggle[data-shape="box"] {
+.te-toggle[data-shape="square"] {
   border-radius: 0.1em;
 }
 
-.rpg-toggle[data-shape="circle"] {
+.te-toggle[data-shape="circle"] {
   border-radius: 50%;
 }
 
-.rpg-toggle[data-shape="diamond"] {
+.te-toggle[data-shape="rhomb"] {
   width: 0.74em;
   height: 0.74em;
   /* The rotated square's diagonal overruns its layout box, so add margin to
@@ -62,14 +62,14 @@
   transform: rotate(45deg);
 }
 
-.rpg-toggle[data-shape="circle"][aria-checked="true"],
-.rpg-toggle[data-shape="diamond"][aria-checked="true"] {
+.te-toggle[data-shape="circle"][aria-checked="true"],
+.te-toggle[data-shape="rhomb"][aria-checked="true"] {
   background-color: currentColor;
 }
 
 /* Filled checkbox: the same checkmark polygon used by the site's native
    checkboxes (index.css), so editor and compendium checkboxes look alike. */
-.rpg-toggle[data-shape="box"][aria-checked="true"]::before {
+.te-toggle[data-shape="square"][aria-checked="true"]::before {
   content: "";
   position: absolute;
   inset: 0.04em;
@@ -78,29 +78,29 @@
 }
 
 /* Help-modal / slash-menu previews are illustration only. */
-.rpg-track[data-preview] .rpg-toggle {
+.te-track[data-preview] .te-toggle {
   cursor: default;
   pointer-events: none;
 }
 
 /* Monster-move and GM-question lines: hanging-indent paragraphs with a marker. */
-.rpg-monster-move,
-.rpg-question {
+.te-arrow,
+.te-chevron {
   margin-left: 1.7em;
   text-indent: -1.7em;
 }
 
-.rpg-monster-move::before {
+.te-arrow::before {
   content: "➤";
   margin-right: 0.55em;
 }
 
-.rpg-question {
+.te-chevron {
   font-style: italic;
   color: var(--color-stone-600, #57534e);
 }
 
-.rpg-question::before {
+.te-chevron::before {
   content: "❯";
   margin-right: 0.55em;
   font-style: normal;
@@ -108,17 +108,17 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .rpg-question {
+  .te-chevron {
     color: var(--color-stone-400, #a8a29e);
   }
 }
 
 /* Task-list item: one clickable box followed by editable text. */
-.rpg-task {
+.te-task {
   list-style: none;
 }
 
-.rpg-task > .rpg-toggle {
+.te-task > .te-toggle {
   margin-right: 0.5em;
   vertical-align: -0.08em;
 }

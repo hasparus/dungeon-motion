@@ -54,7 +54,7 @@ export function EditorHelpModal() {
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Editor guide"
-        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:text-stone-800 focus-visible:text-stone-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-400 dark:hover:text-stone-200 dark:focus-visible:text-stone-200 print:hidden hover:bg-stone-100 dark:hover:bg-stone-800"
+        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:text-stone-800 focus-visible:text-stone-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-400 dark:hover:text-stone-200 dark:focus-visible:text-stone-200 print:hidden hover:bg-stone-200/70 hover:duration-0 dark:hover:bg-stone-800"
         onClick={() => setOpen(true)}
         type="button"
       >

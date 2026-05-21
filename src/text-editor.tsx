@@ -1177,13 +1177,11 @@ export function TextEditor() {
             aria-label={
               spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"
             }
-            className="flex size-10 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
+            className="flex font-mono text-xs items-center justify-center px-1 py-0.5 text-stone-500 transition hover:duration-0 hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
             onClick={() => setSpellcheck((value) => !value)}
             type="button"
           >
-            <span aria-hidden="true" className="text-lg leading-none">
-              {spellcheck ? "✓" : "✗"}
-            </span>
+            [spellcheck {spellcheck ? "on" : "off"}]
           </button>
         </div>
       </div>

@@ -545,7 +545,7 @@ function applyTaskShorthand(root: HTMLElement): UndoSnapshot | null {
 interface SlashState {
   // Placement: left edge + width follow the editor's text column so the menu
   // lines up with the paragraph; top follows the caret's line.
-  anchor: { width: number; left: number; top: number; };
+  anchor: { width: number; left: number; top: number };
   atStart: boolean;
   blockTag: string;
   count: number | null;
@@ -747,7 +747,7 @@ function handleEnter(root: HTMLElement) {
   return false;
 }
 
-export function DungeonEditor() {
+export function TextEditor() {
   const editorRef = useRef<HTMLDivElement>(null);
   // One-slot custom undo: the editor's transforms (slash commands, `- [ ] `,
   // headings, lists) bypass the browser's history, so Ctrl/Cmd+Z restores
@@ -757,7 +757,6 @@ export function DungeonEditor() {
     const saved = localStorage.getItem(SPELLCHECK_KEY);
     return saved === null ? true : saved === "true";
   });
-  const [helpOpen, setHelpOpen] = useState(false);
   const [slash, setSlash] = useState<SlashState | null>(null);
   const [slashIndex, setSlashIndex] = useState(0);
 
@@ -916,7 +915,9 @@ export function DungeonEditor() {
             if (!editor) return;
 
             // Click — or keyboard Space/Enter on a focused toggle — toggles it.
-            const toggle = (event.target as HTMLElement).closest?.(".te-toggle");
+            const toggle = (event.target as HTMLElement).closest?.(
+              ".te-toggle",
+            );
             if (toggle instanceof HTMLElement && editor.contains(toggle)) {
               const checked = toggle.getAttribute("aria-checked") === "true";
               toggle.setAttribute("aria-checked", checked ? "false" : "true");
@@ -926,7 +927,9 @@ export function DungeonEditor() {
           }}
           onFocus={(event) => {
             // Keep the track's roving tabindex on whichever toggle was reached.
-            const toggle = (event.target as HTMLElement).closest?.(".te-toggle");
+            const toggle = (event.target as HTMLElement).closest?.(
+              ".te-toggle",
+            );
             if (!(toggle instanceof HTMLElement)) return;
             const track = toggle.closest(".te-track");
             if (!track) return;
@@ -1185,21 +1188,7 @@ export function DungeonEditor() {
         </div>
       </div>
 
-      <button
-        aria-expanded={helpOpen}
-        aria-haspopup="dialog"
-        aria-label="Editor guide"
-        className="fixed right-3 top-3 z-30 flex size-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:text-stone-800 focus-visible:text-stone-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stone-400 dark:text-stone-400 dark:hover:text-stone-200 dark:focus-visible:text-stone-200 print:hidden"
-        onClick={() => setHelpOpen(true)}
-        type="button"
-      >
-        <span
-          aria-hidden="true"
-          className="translate-y-px text-lg leading-none"
-        >
-          ?
-        </span>
-      </button>
+      <EditorHelpModal />
 
       {slash && (
         <SlashMenu
@@ -1213,8 +1202,6 @@ export function DungeonEditor() {
           optionId={slashOptionId}
         />
       )}
-
-      <EditorHelpModal onClose={() => setHelpOpen(false)} open={helpOpen} />
     </main>
   );
 }

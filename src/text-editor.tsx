@@ -1171,19 +1171,6 @@ export function TextEditor() {
           spellCheck={spellcheck}
           suppressContentEditableWarning
         />
-
-        <div className="mt-4 flex justify-end print:hidden">
-          <button
-            aria-label={
-              spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"
-            }
-            className="flex font-mono text-xs items-center justify-center px-1 py-0.5 text-stone-500 transition hover:duration-0 hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
-            onClick={() => setSpellcheck((value) => !value)}
-            type="button"
-          >
-            [spellcheck {spellcheck ? "on" : "off"}]
-          </button>
-        </div>
       </div>
 
       <EditorHelpModal />
@@ -1200,6 +1187,17 @@ export function TextEditor() {
           optionId={slashOptionId}
         />
       )}
+
+      <footer className="mt-4 px-4 pb-5 absolute bottom-0 right-0 flex justify-end print:hidden">
+        <button
+          aria-label={spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"}
+          className="flex font-mono text-xs items-center justify-center px-1 py-0.5 text-stone-500 transition hover:duration-0 hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
+          onClick={() => setSpellcheck((value) => !value)}
+          type="button"
+        >
+          [spellcheck {spellcheck ? "on" : "off"}]
+        </button>
+      </footer>
     </main>
   );
 }

@@ -15,10 +15,6 @@ interface SlashMenuProps {
   optionId: (name: string) => string;
 }
 
-// Autocomplete popup for `/` commands. Keyboard navigation is owned by the
-// editor (it intercepts arrows/Enter while the menu is open); this component
-// only renders and handles pointer selection. font-text matches the editor's
-// reading serif (Crimson Text).
 export function SlashMenu({
   id,
   activeId,
@@ -35,10 +31,14 @@ export function SlashMenu({
 
   return (
     <div
-      className="fixed z-40 overflow-hidden rounded-lg border border-stone-300 bg-white font-text shadow-xl dark:border-stone-700 dark:bg-stone-900"
+      className="fixed z-40 overflow-hidden rounded-lg ring-stone-400/30 dark:ring-stone-600/30 bg-white font-text shadow-xl dark:bg-stone-900 ring"
       id={id}
       role="listbox"
-      style={{ width: anchor.width, left: anchor.left, top: anchor.top + 6 }}
+      style={{
+        width: anchor.width,
+        left: anchor.left,
+        top: anchor.top + 6,
+      }}
     >
       {commands.map((command, i) => (
         <div

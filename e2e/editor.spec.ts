@@ -1,7 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
-const STORAGE_KEY = 'dungeon-motion-editor-document-v3';
-const SPELLCHECK_KEY = 'dungeon-motion-editor-spellcheck';
+const STORAGE_KEY = 'text-editor-document';
+const SPELLCHECK_KEY = 'text-editor-spellcheck';
 
 async function resetEditor(page: Page) {
   await page.evaluate(([docKey, spellKey]) => {
@@ -13,7 +13,7 @@ async function resetEditor(page: Page) {
 
   const editor = page.getByRole('textbox', { name: 'Editor' });
   await expect(editor).toBeVisible();
-  await expect(page.locator('button[aria-label]')).toBeVisible();
+  await expect(page.locator('button[aria-label^="Turn spellcheck"]')).toBeVisible();
   await editor.click();
   return editor;
 }
@@ -82,6 +82,35 @@ test.describe('/editor', () => {
     await expect(page.getByRole('listitem').first()).toHaveText(bullet);
   });
 
+  test('converts a numbered list trigger into an ordered list', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('1. first item');
+    await page.keyboard.press('Enter');
+
+    await expect(editor.locator('ol > li').first()).toHaveText('first item');
+  });
+
+  test('Enter keeps a list going, then an empty item exits it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- one');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('two');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('three');
+    await expect(editor.locator('ul > li')).toHaveText(['one', 'two', 'three']);
+
+    // Enter on the (empty) next item drops back out to a paragraph.
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Enter');
+    await expect(editor.locator('ul > li')).toHaveText(['one', 'two', 'three']);
+    await editor.pressSequentially('after the list');
+    await expect(editor.locator('p')).toContainText('after the list');
+  });
+
   test('converts bold markdown into a strong tag', async ({ page }) => {
     const stamp = Date.now();
     const bold = `bold-${stamp}`;
@@ -91,7 +120,7 @@ test.describe('/editor', () => {
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use **${bold}**`);
 
-    await expect(page.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('strong')).toHaveText(bold);
     await expect(page.getByText(`Use ${bold}`)).toBeVisible();
   });
 
@@ -104,7 +133,7 @@ test.describe('/editor', () => {
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use _${italics}_.`);
 
-    await expect(page.locator('i')).toHaveText(`${italics}.`);
+    await expect(editor.locator('i')).toHaveText(`${italics}.`);
     await expect(page.getByText(`Use ${italics}.`)).toBeVisible();
   });
 
@@ -117,11 +146,11 @@ test.describe('/editor', () => {
 
     const editor = await resetEditor(page);
     await editor.pressSequentially(`Use **${bold}**`);
-    await expect(page.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('strong')).toHaveText(bold);
 
     await editor.pressSequentially(` and _${italics}_.`);
-    await expect(page.locator('strong')).toHaveText(bold);
-    await expect(page.locator('i')).toHaveText(`${italics}.`);
+    await expect(editor.locator('strong')).toHaveText(bold);
+    await expect(editor.locator('i')).toHaveText(`${italics}.`);
     await expect(page.getByText(`Use ${bold} and ${italics}.`)).toBeVisible();
   });
 
@@ -554,5 +583,421 @@ test.describe('/editor — IME composition guard', () => {
     // The `**partial` text should remain as-is (not transformed to <strong>).
     await expect(editor).toContainText('**partial');
     await expect(editor.locator('strong')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — slash commands', () => {
+  test('/squares N inserts a row of N squares', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 3');
+    await page.keyboard.press('Space');
+
+    await expect(editor.getByRole('checkbox', { name: 'square' })).toHaveCount(3);
+  });
+
+  test('/circles with no count uses the default of 4', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/circles');
+    await page.keyboard.press('Enter');
+
+    await expect(editor.getByRole('checkbox', { name: 'circle' })).toHaveCount(4);
+  });
+
+  test('/rhombs N inserts N rhombs', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/rhombs 5');
+    await page.keyboard.press('Space');
+
+    await expect(editor.getByRole('checkbox', { name: 'rhomb' })).toHaveCount(5);
+  });
+
+  test('/arrow turns the line into an arrow paragraph', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/arrow');
+    await page.keyboard.press('Space');
+    await editor.pressSequentially('points somewhere');
+
+    await expect(editor.locator('p.te-arrow')).toHaveText('points somewhere');
+  });
+
+  test('/chevron turns the line into a chevron paragraph', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/chevron');
+    await page.keyboard.press('Space');
+    await editor.pressSequentially('a quiet aside');
+
+    await expect(editor.locator('p.te-chevron')).toHaveText('a quiet aside');
+  });
+
+  test('switching an arrow line to a chevron replaces the kind, not stacks it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/arrow');
+    await page.keyboard.press('Space');
+    await expect(editor.locator('p.te-arrow')).toHaveCount(1);
+
+    await editor.pressSequentially('/chevron');
+    await page.keyboard.press('Space');
+
+    await expect(editor.locator('p.te-arrow')).toHaveCount(0);
+    await expect(editor.locator('p.te-chevron')).toHaveCount(1);
+  });
+
+  test('typing / opens the command menu and Escape dismisses it', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/');
+    await expect(page.getByRole('listbox')).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('listbox')).toBeHidden();
+  });
+
+  test('Tab dismisses the command menu', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/');
+    await expect(page.getByRole('listbox')).toBeVisible();
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('listbox')).toBeHidden();
+  });
+
+  test('the command menu filters to the typed prefix', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/circ');
+    await expect(page.getByRole('option')).toHaveCount(1);
+    await expect(page.getByRole('option', { name: /circles/i })).toBeVisible();
+  });
+});
+
+test.describe('/editor — task lists', () => {
+  test('- [ ] converts a paragraph into a checkbox list item', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] gather rope');
+
+    const item = editor.getByRole('listitem');
+    await expect(item).toHaveCount(1);
+    await expect(item).toHaveText('gather rope');
+    await expect(item.getByRole('checkbox')).not.toBeChecked();
+  });
+
+  test('- [x] converts into a pre-checked task item', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [x] secured');
+
+    await expect(editor.getByRole('listitem').getByRole('checkbox')).toBeChecked();
+  });
+
+  test('Enter on a task item continues the list with a fresh checkbox', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] first');
+    await page.keyboard.press('Enter');
+    await editor.pressSequentially('second');
+
+    await expect(editor.getByRole('listitem')).toHaveCount(2);
+    await expect(editor.getByRole('listitem').nth(1)).toHaveText('second');
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
+  });
+
+  test('Enter on an empty task item exits the list', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('- [ ] ');
+    await expect(editor.getByRole('listitem')).toHaveCount(1);
+
+    await page.keyboard.press('Enter');
+    await expect(editor.getByRole('listitem')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — atom interaction', () => {
+  test('clicking a toggle toggles its checked state', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 2');
+    await page.keyboard.press('Space');
+
+    const toggle = editor.getByRole('checkbox').first();
+    await expect(toggle).not.toBeChecked();
+
+    await toggle.click();
+    await expect(toggle).toBeChecked();
+
+    await toggle.click();
+    await expect(toggle).not.toBeChecked();
+  });
+
+  test('keyboard: focused toggle responds to Space', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 2');
+    await page.keyboard.press('Space');
+
+    const toggle = editor.getByRole('checkbox').first();
+    await toggle.focus();
+    await expect(toggle).toBeFocused();
+    await expect(toggle).not.toBeChecked();
+
+    await page.keyboard.press('Space');
+    await expect(toggle).toBeChecked();
+
+    await page.keyboard.press('Enter');
+    await expect(toggle).not.toBeChecked();
+  });
+
+  test('keyboard: arrows move focus between toggles in a track', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 3');
+    await page.keyboard.press('Space');
+
+    const toggles = editor.getByRole('checkbox');
+    await toggles.first().focus();
+    await expect(toggles.first()).toBeFocused();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(toggles.nth(1)).toBeFocused();
+
+    await page.keyboard.press('ArrowRight');
+    await expect(toggles.nth(2)).toBeFocused();
+
+    await page.keyboard.press('ArrowLeft');
+    await expect(toggles.nth(1)).toBeFocused();
+  });
+
+  test('inserted atoms and their checked state survive a reload', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 3');
+    await page.keyboard.press('Space');
+    await editor.getByRole('checkbox').first().click();
+    await expect(editor.getByRole('checkbox').first()).toBeChecked();
+
+    await page.reload();
+
+    await expect(editor.getByRole('checkbox')).toHaveCount(3);
+    await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
+  });
+
+  test('Backspace peels one toggle off a track, then removes the empty track', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 3');
+    await page.keyboard.press('Space');
+    await expect(editor.getByRole('checkbox')).toHaveCount(3);
+
+    // commitSlash leaves a trailing space; the first Backspace eats it,
+    // each following one peels a single toggle.
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
+
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(1);
+
+    // The last toggle falls through to the default — the whole track goes.
+    await page.keyboard.press('Backspace');
+    await expect(editor.getByRole('checkbox')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — undo', () => {
+  const mod = process.platform === 'darwin' ? 'Meta' : 'Control';
+
+  test('Ctrl+Z reverts a slash command back to its typed text', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await editor.pressSequentially('/squares 3');
+    await page.keyboard.press('Space');
+    await expect(editor.getByRole('checkbox')).toHaveCount(3);
+
+    await page.keyboard.press(`${mod}+z`);
+    await expect(editor.getByRole('checkbox')).toHaveCount(0);
+    await expect(editor).toContainText('/squares 3');
+  });
+
+  test('Ctrl+Z reverts a task-list transform', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    // Undo fires on the snapshot taken just before the transform; reverting
+    // it immediately (no further typing) restores the literal marker text.
+    await editor.pressSequentially('- [ ] ');
+    await expect(editor.getByRole('listitem')).toHaveCount(1);
+
+    await page.keyboard.press(`${mod}+z`);
+    await expect(editor.getByRole('listitem')).toHaveCount(0);
+    await expect(editor).toContainText('- [ ]');
+  });
+});
+
+test.describe('/editor — security: atom sanitization', () => {
+  test('round-trips atoms from saved HTML', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p>before <span class="te-track" contenteditable="false"><button type="button" class="te-toggle" role="checkbox" data-shape="circle" aria-checked="true"></button><button type="button" class="te-toggle" role="checkbox" data-shape="circle" aria-checked="false"></button></span> after</p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText('before');
+    await expect(editor).toContainText('after');
+    await expect(editor.getByRole('checkbox')).toHaveCount(2);
+    await expect(editor.getByRole('checkbox', { checked: true })).toHaveCount(1);
+  });
+
+  test('round-trips arrow and chevron lines from saved HTML', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p class="te-arrow">pointer</p><p class="te-chevron">aside</p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor.locator('p.te-arrow')).toHaveText('pointer');
+    await expect(editor.locator('p.te-chevron')).toHaveText('aside');
+  });
+
+  test('normalizes invalid toggle attributes and drops unknown ones', async ({ page }) => {
+    await seedDocument(
+      page,
+      '<p><button class="te-toggle" data-shape="javascript:" aria-checked="evil" data-bogus="x" onclick="globalThis.__xss = true">p</button></p>',
+    );
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+
+    const toggle = editor.getByRole('checkbox');
+    await expect(toggle).toHaveCount(1);
+    // Unknown shape falls back to a square; junk aria-checked → unchecked.
+    await expect(toggle).toHaveAccessibleName('square');
+    await expect(toggle).not.toBeChecked();
+    await expect(toggle).not.toHaveAttribute('data-bogus', /.*/);
+    await expect(toggle).not.toHaveAttribute('onclick', /.*/);
+    expect(await page.evaluate(() => (globalThis as unknown as { __xss: boolean }).__xss)).toBe(false);
+  });
+
+  test('flattens a span whose class is not an exact atom match', async ({ page }) => {
+    await seedDocument(page, '<p>aaa<span class="te-toggle-fake">bbb</span>ccc</p>');
+    await page.goto('/editor');
+
+    const editor = page.getByRole('textbox', { name: 'Editor' });
+    await expect(editor).toBeVisible();
+    await expect(editor).toContainText('aaabbbccc');
+    await expect(editor.locator('span')).toHaveCount(0);
+  });
+});
+
+test.describe('/editor — security: foreign-content paste', () => {
+  test('paste of <svg> with embedded HTML drops the whole subtree', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await simulateHtmlPaste(
+      editor,
+      'before<svg><foreignObject><b onclick="globalThis.__xss = true">x</b></foreignObject></svg>after',
+    );
+
+    await expect(editor.locator('svg')).toHaveCount(0);
+    await expect(editor).toContainText('before');
+    await expect(editor).toContainText('after');
+    expect(await page.evaluate(() => (globalThis as unknown as { __xss?: boolean }).__xss ?? false)).toBe(false);
+  });
+
+  test('paste of <math> is dropped', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await simulateHtmlPaste(editor, 'a<math><mtext>m</mtext></math>b');
+
+    await expect(editor.locator('math')).toHaveCount(0);
+    await expect(editor).toContainText('ab');
+  });
+
+  test('paste of <noscript> wrapping a script keeps no executable element', async ({ page }) => {
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+
+    await simulateHtmlPaste(
+      editor,
+      'x<noscript><script>globalThis.__xss = true</script></noscript>y',
+    );
+
+    await expect(editor.locator('script, noscript')).toHaveCount(0);
+    expect(await page.evaluate(() => (globalThis as unknown as { __xss?: boolean }).__xss ?? false)).toBe(false);
+  });
+});
+
+test.describe('/editor — help modal', () => {
+  test('the ? button opens the guide and Escape closes it', async ({ page }) => {
+    await page.goto('/editor');
+    await resetEditor(page);
+
+    await page.getByRole('button', { name: 'Editor guide' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editor guide' });
+    await expect(dialog).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+  });
+
+  test('the close button dismisses the guide', async ({ page }) => {
+    await page.goto('/editor');
+    await resetEditor(page);
+
+    await page.getByRole('button', { name: 'Editor guide' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editor guide' });
+    await expect(dialog).toBeVisible();
+
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toBeHidden();
+  });
+
+  test('clicking inside keeps the guide open; the backdrop closes it', async ({ page }) => {
+    await page.goto('/editor');
+    await resetEditor(page);
+
+    await page.getByRole('button', { name: 'Editor guide' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Editor guide' });
+    await expect(dialog).toBeVisible();
+
+    // A click on the dialog's own content must not dismiss it.
+    await dialog.getByRole('heading', { name: 'Editor guide' }).click();
+    await expect(dialog).toBeVisible();
+
+    // A click on the backdrop (top-left corner, clear of the centred card) does.
+    await page.mouse.click(8, 8);
+    await expect(dialog).toBeHidden();
   });
 });

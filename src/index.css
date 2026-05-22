@@ -3,13 +3,25 @@
 @custom-variant dark (@media (prefers-color-scheme: dark));
 
 @theme {
-  --font-serif: "Avara", Georgia, serif;
-  --font-hand: "Caveat", cursive;
+  --font-serif: "Avara",
+  Georgia,
+  serif;
+
+  --font-hand: "Caveat",
+  cursive;
+
+  --font-text: "Crimson Text",
+  Georgia,
+  serif;
 }
 
 html {
   font-family: var(--font-serif);
   color: var(--color-stone-700);
+}
+
+button {
+  cursor: pointer;
 }
 
 body {
@@ -20,6 +32,7 @@ body {
   html {
     color: var(--color-stone-300);
   }
+
   body {
     background-color: var(--color-stone-900);
   }
@@ -123,8 +136,7 @@ input[type="checkbox"]:disabled {
 em {
   font-style: normal;
   color: var(--color-stone-900);
-  text-decoration: underline dashed
-    color-mix(in srgb, var(--color-stone-900) 25%, transparent);
+  text-decoration: underline dashed color-mix(in srgb, var(--color-stone-900) 25%, transparent);
   letter-spacing: -0.01em;
   text-underline-offset: 2px;
 }
@@ -138,6 +150,7 @@ strong {
     color: var(--color-stone-100);
     text-decoration-color: var(--color-stone-600);
   }
+
   strong {
     color: var(--color-stone-200);
   }
@@ -152,7 +165,7 @@ ul.diamond {
   padding-left: 0;
 }
 
-ul.diamond > li::before {
+ul.diamond>li::before {
   content: "◈";
   color: var(--color-stone-400);
   margin-right: 0.5rem;
@@ -161,7 +174,7 @@ ul.diamond > li::before {
 }
 
 @media (prefers-color-scheme: dark) {
-  ul.diamond > li::before {
+  ul.diamond>li::before {
     color: var(--color-stone-500);
   }
 }
@@ -173,11 +186,9 @@ a {
   &:hover {
     color: var(--color-stone-900);
     text-decoration-color: var(--color-blue-600);
-    background: linear-gradient(
-      to bottom,
-      transparent 0%,
-      color-mix(in srgb, var(--color-blue-500) 10%, transparent 100%) 100%
-    );
+    background: linear-gradient(to bottom,
+        transparent 0%,
+        color-mix(in srgb, var(--color-blue-500) 10%, transparent 100%) 100%);
   }
 }
 
@@ -188,11 +199,17 @@ a {
     &:hover {
       color: var(--color-stone-50);
       text-decoration-color: var(--color-orange-400);
-      background: linear-gradient(
-        to bottom,
-        transparent 0%,
-        color-mix(in srgb, var(--color-orange-500) 20%, transparent 100%) 100%
-      );
+      background: linear-gradient(to bottom,
+          transparent 0%,
+          color-mix(in srgb, var(--color-orange-500) 20%, transparent 100%) 100%);
     }
   }
+}
+
+@utility trim-cap-alphabetic {
+  text-box: trim-both cap alphabetic;
+}
+
+@utility trim-end-alphabetic {
+  text-box: trim-end cap alphabetic;
 }

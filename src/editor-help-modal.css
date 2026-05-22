@@ -60,8 +60,14 @@
 }
 
 .te-help-dialog[open]::backdrop {
-  background-color: color-mix(in srgb, #1c1917 50%, transparent);
+  background-color: color-mix(in srgb, #ffffff 50%, transparent);
   backdrop-filter: blur(4px);
+}
+
+@media (prefers-color-scheme: dark) {
+  .te-help-dialog[open]::backdrop {
+    background-color: color-mix(in srgb, #1c1917 50%, transparent);
+  }
 }
 
 @starting-style {

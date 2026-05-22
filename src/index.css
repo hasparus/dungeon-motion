@@ -18,23 +18,34 @@
 html {
   font-family: var(--font-serif);
   color: var(--color-stone-700);
+  min-height: 100%;
+
+  --grain-bg: #fafaf9;
+  --grain-fade: 1024px;
+  --grain-blend: multiply;
+  --grain-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.28' intercept='0.72'/%3E%3CfeFuncG type='linear' slope='0.28' intercept='0.72'/%3E%3CfeFuncB type='linear' slope='0.28' intercept='0.72'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  background-color: var(--grain-bg);
+  background-image:
+    linear-gradient(to bottom, var(--grain-bg), transparent var(--grain-fade)),
+    linear-gradient(to top, var(--grain-bg), transparent var(--grain-fade)),
+    var(--grain-noise);
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: auto, auto, 512px 512px;
+  background-blend-mode: normal, normal, var(--grain-blend);
 }
 
 button {
   cursor: pointer;
 }
 
-body {
-  background-color: #fafaf9;
-}
 
 @media (prefers-color-scheme: dark) {
   html {
     color: var(--color-stone-300);
-  }
-
-  body {
-    background-color: var(--color-stone-900);
+    --grain-bg: var(--color-stone-900);
+    --grain-blend: screen;
+    --grain-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeComponentTransfer%3E%3CfeFuncR type='linear' slope='0.02' intercept='0'/%3E%3CfeFuncG type='linear' slope='0.02' intercept='0'/%3E%3CfeFuncB type='linear' slope='0.02' intercept='0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 }
 
@@ -107,6 +118,7 @@ input[type="checkbox"]:disabled {
   html {
     color: black;
     font-size: 8pt;
+    background: white !important;
   }
 
   body {

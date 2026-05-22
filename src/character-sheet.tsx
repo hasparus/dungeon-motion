@@ -3,7 +3,6 @@ import type React from "react";
 import { useRef, useState } from "react";
 
 import { cn } from "./cn";
-import { GrainOverlay } from "./grain-overlay";
 import { PortraitCanvas, type PortraitCanvasHandle } from "./portrait-canvas";
 import { generateVillager } from "./villager-generator";
 
@@ -94,27 +93,29 @@ function SheetControls() {
           clearForm();
           const v = generateVillager();
           const data: SheetData = {
-            "armor": "0",
-            "background": `${v.species} ${v.occupation}`,
+            armor: "0",
+            background: `${v.species} ${v.occupation}`,
             "bond-0": v.bond,
             "char-name": v.name,
-            "damage": v.damage,
-            "hp": String(v.hp),
-            "level": "0",
-            "look": v.look,
+            damage: v.damage,
+            hp: String(v.hp),
+            level: "0",
+            look: v.look,
             "stat-cha": formatMod(v.modifiers.CHA),
             "stat-con": formatMod(v.modifiers.CON),
             "stat-dex": formatMod(v.modifiers.DEX),
             "stat-int": formatMod(v.modifiers.INT),
             "stat-str": formatMod(v.modifiers.STR),
             "stat-wis": formatMod(v.modifiers.WIS),
-            "xp": "0",
+            xp: "0",
           };
           applySheet(data);
           // Fill gear into the first inventory slot area
           const form = document.querySelector("form");
           if (form) {
-            const gearField = form.querySelector<HTMLInputElement | HTMLTextAreaElement>('[name="possession-0"]');
+            const gearField = form.querySelector<
+              HTMLInputElement | HTMLTextAreaElement
+            >('[name="possession-0"]');
             if (gearField) {
               gearField.value = v.gear.join(", ");
               gearField.dispatchEvent(new Event("input", { bubbles: true }));
@@ -171,7 +172,6 @@ function SheetControls() {
 export function CharacterSheet() {
   return (
     <form autoComplete="off" className="min-h-screen">
-      <GrainOverlay />
       <SheetControls />
 
       <div className="relative max-w-6xl mx-auto px-6 print:max-w-none print:mx-0 print:px-0">

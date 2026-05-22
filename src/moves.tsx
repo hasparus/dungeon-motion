@@ -1,7 +1,6 @@
 import { CheckboxList } from "./checkbox-list";
 import { Columns } from "./columns";
 import { DiegeticImprovement } from "./diegetic-improvemnet";
-import { GrainOverlay } from "./grain-overlay";
 import { MonsterCompendium } from "./monster-compendium";
 import { MoveCard } from "./move-card";
 import { SectionDivider } from "./section-divider";
@@ -12,8 +11,6 @@ import { WielderCompendium } from "./wielder-compendium";
 export const Moves = () => {
   return (
     <form className="min-h-screen">
-      <GrainOverlay />
-
       <div className="relative max-w-4xl mx-auto px-6 print:px-0">
         <section className="mb-16">
           <Columns>

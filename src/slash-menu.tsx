@@ -6,7 +6,7 @@ interface SlashMenuProps {
   // aria-activedescendant so assistive tech tracks the selection.
   activeId: string | undefined;
   // Left edge + width track the editor's text column; top sits below the caret.
-  anchor: { width: number; left: number; top: number; };
+  anchor: { width: number; left: number; top: number };
   commands: SlashCommand[];
   count: number | null;
   id: string;
@@ -41,11 +41,12 @@ export function SlashMenu({
       style={{ width: anchor.width, left: anchor.left, top: anchor.top + 6 }}
     >
       {commands.map((command, i) => (
-        <button
+        <div
           aria-selected={i === active}
           className={cn(
-            "flex w-full items-center gap-3 px-3 py-2 text-left",
-            optionId(command.name) === activeId && "bg-stone-100 dark:bg-stone-800",
+            "flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left",
+            optionId(command.name) === activeId &&
+              "bg-stone-100 dark:bg-stone-800",
           )}
           id={optionId(command.name)}
           key={command.name}
@@ -55,7 +56,6 @@ export function SlashMenu({
             onPick(command);
           }}
           role="option"
-          type="button"
         >
           <span className="w-28 shrink-0 font-mono text-xs text-stone-400 dark:text-stone-500">
             /{command.name}
@@ -69,7 +69,7 @@ export function SlashMenu({
               shape={command.shape}
             />
           )}
-        </button>
+        </div>
       ))}
     </div>
   );

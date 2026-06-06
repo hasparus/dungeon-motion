@@ -28,6 +28,7 @@ import {
   restoreSelection,
   sanitizeHtml,
   save,
+  serializeDocument,
   SLASH_MENU_ID,
   SLASH_QUERY,
   slashOptionId,
@@ -40,6 +41,7 @@ import {
 import { EditorHelpModal } from "./editor-help-modal";
 import { SlashMenu } from "./slash-menu";
 import styles from "./text-editor.module.css";
+import { useLinkedFile } from "./use-linked-file";
 import "./editor-atoms.css";
 
 // Keeps a track's roving tabindex on whichever toggle focus last reached.
@@ -73,6 +75,16 @@ export function TextEditor() {
   });
   const [slash, setSlash] = useState<SlashState | null>(null);
   const [slashIndex, setSlashIndex] = useState(0);
+  const file = useLinkedFile();
+
+  function persist(editor: HTMLElement) {
+    save(editor);
+    file.queue(serializeDocument(editor));
+  }
+  function persistNow(editor: HTMLElement) {
+    flushSave(editor);
+    void file.flushWrite(serializeDocument(editor));
+  }
 
   // Recomputes the pending `/command` query after any caret-moving event.
   function refreshSlash() {
@@ -91,7 +103,7 @@ export function TextEditor() {
     restoreSelection(editor, snapshot.selection);
     pendingUndo.current = null;
     setSlash(null);
-    flushSave(editor);
+    persistNow(editor);
   }
 
   // Replaces the typed `/command` query with its rendered atom.
@@ -157,7 +169,7 @@ export function TextEditor() {
     setSlash(null);
     setSlashIndex(0);
     normalizeEmptyBlocks(editor);
-    flushSave(editor);
+    persistNow(editor);
   }
 
   useEffect(() => {
@@ -200,6 +212,28 @@ export function TextEditor() {
     localStorage.setItem(SPELLCHECK_KEY, String(spellcheck));
   }, [spellcheck]);
 
+  async function handleOpenFile() {
+    const editor = editorRef.current;
+    if (!editor) return;
+    const html = await file.open();
+    if (html === null) return;
+    editor.innerHTML = sanitizeHtml(html);
+    normalizeTrackTabindexes(editor);
+    setSlash(null);
+    pendingUndo.current = null;
+    flushSave(editor);
+  }
+
+  async function handleSaveFile() {
+    const editor = editorRef.current;
+    if (editor) await file.save(serializeDocument(editor));
+  }
+
+  async function handleCloseFile() {
+    const editor = editorRef.current;
+    await file.close(editor ? serializeDocument(editor) : undefined);
+  }
+
   const slashCommands = slash ? matchSlashCommands(slash) : [];
   const slashActiveId =
     slashCommands.length > 0
@@ -210,7 +244,7 @@ export function TextEditor() {
 
   function handleBlur() {
     const editor = editorRef.current;
-    if (editor) flushSave(editor);
+    if (editor) persistNow(editor);
     setSlash(null);
   }
 
@@ -223,7 +257,7 @@ export function TextEditor() {
     if (toggle instanceof HTMLElement && editor.contains(toggle)) {
       const checked = toggle.getAttribute("aria-checked") === "true";
       toggle.setAttribute("aria-checked", checked ? "false" : "true");
-      flushSave(editor);
+      persistNow(editor);
     }
     refreshSlash();
   }
@@ -238,7 +272,7 @@ export function TextEditor() {
     pendingUndo.current = applyTaskShorthand(editor);
     normalizeEmptyBlocks(editor);
     refreshSlash();
-    save(editor);
+    persist(editor);
   }
 
   function handlePaste(event: ClipboardEvent<HTMLDivElement>) {
@@ -291,6 +325,20 @@ export function TextEditor() {
     const editor = editorRef.current;
     if (!editor) return;
 
+    if ((event.metaKey || event.ctrlKey) && file.supported) {
+      const key = event.key.toLowerCase();
+      if (key === "s") {
+        event.preventDefault();
+        void file.save(serializeDocument(editor));
+        return;
+      }
+      if (key === "o") {
+        event.preventDefault();
+        void handleOpenFile();
+        return;
+      }
+    }
+
     // Ctrl/Cmd+Z reverts the most recent editor transform.
     if (
       (event.metaKey || event.ctrlKey) &&
@@ -326,7 +374,7 @@ export function TextEditor() {
       if (last && toggles.length > 1) {
         event.preventDefault();
         last.remove();
-        flushSave(editor);
+        persistNow(editor);
         return;
       }
     }
@@ -337,10 +385,13 @@ export function TextEditor() {
         event.preventDefault();
         normalizeEmptyBlocks(editor);
         pendingUndo.current = snapshot;
-        flushSave(editor);
+        persistNow(editor);
       }
     }
   }
+
+  const controlButton =
+    "flex font-mono text-xs items-center justify-center px-1 py-0.5 text-stone-500 transition hover:duration-0 hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50";
 
   return (
     <main className="min-h-screen">
@@ -382,10 +433,53 @@ export function TextEditor() {
         />
       )}
 
-      <footer className="px-4 pb-5 mt-auto flex justify-end print:hidden">
+      <footer className="px-4 pb-5 mt-auto flex items-center justify-between gap-2 print:hidden">
+        <div className="flex min-w-0 items-center gap-1 font-mono text-xs text-stone-500 dark:text-stone-400">
+          {file.supported &&
+            (file.name === null ? (
+              <>
+                <button
+                  className={controlButton}
+                  onClick={() => void handleOpenFile()}
+                  type="button"
+                >
+                  [open file]
+                </button>
+                <button
+                  className={controlButton}
+                  onClick={() => void handleSaveFile()}
+                  type="button"
+                >
+                  [save as…]
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className={controlButton}
+                  onClick={() => void handleSaveFile()}
+                  type="button"
+                >
+                  [save]
+                </button>
+                <button
+                  className={controlButton}
+                  onClick={() => void handleCloseFile()}
+                  type="button"
+                >
+                  [close]
+                </button>
+                <span className="truncate px-1" title={file.name}>
+                  {file.name}
+                  {file.status === "saving" && " · saving…"}
+                  {file.status === "error" && " · save failed"}
+                </span>
+              </>
+            ))}
+        </div>
         <button
           aria-label={spellcheck ? "Turn spellcheck off" : "Turn spellcheck on"}
-          className="flex font-mono text-xs items-center justify-center px-1 py-0.5 text-stone-500 transition hover:duration-0 hover:bg-stone-200/70 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-50"
+          className={controlButton}
           onClick={() => setSpellcheck((value) => !value)}
           type="button"
         >

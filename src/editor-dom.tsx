@@ -349,9 +349,13 @@ export function captureSnapshot(root: HTMLElement): UndoSnapshot {
   return { html: root.innerHTML, selection: captureSelection(root) };
 }
 
+export function serializeDocument(root: HTMLElement): string {
+  return root.innerHTML.replaceAll("\u200B", "");
+}
+
 function saveImmediate(root: HTMLElement) {
   try {
-    localStorage.setItem(STORAGE_KEY, root.innerHTML.replaceAll("\u200B", ""));
+    localStorage.setItem(STORAGE_KEY, serializeDocument(root));
   } catch (error) {
     // Quota exceeded or storage unavailable — keep editing rather than throw
     // an uncaught error mid-keystroke.

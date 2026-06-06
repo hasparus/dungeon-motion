@@ -188,6 +188,9 @@ function blockToDom(node: RootContent): HTMLElement | null {
     case "mdxJsxFlowElement":
       return flowElementToDom(node);
     case "paragraph": {
+      const only = node.children.length === 1 ? node.children[0] : null;
+      if (only?.type === "mdxJsxTextElement" && only.name === "Line")
+        return lineToDom(only);
       const el = document.createElement("p");
       appendPhrasing(el, node.children);
       return el;
@@ -220,11 +223,12 @@ function listItemToDom(item: ListItem): HTMLElement {
   return li;
 }
 
-function lineToDom(node: MdxJsxFlowElement): HTMLElement {
+function lineToDom(node: MdxJsxFlowElement | MdxJsxTextElement): HTMLElement {
   const el = document.createElement("p");
   el.className =
     attributeOf(node, "kind") === "chevron" ? "te-chevron" : "te-arrow";
-  appendBlocksInline(el, node.children);
+  if (node.type === "mdxJsxFlowElement") appendBlocksInline(el, node.children);
+  else appendPhrasing(el, node.children);
   return el;
 }
 

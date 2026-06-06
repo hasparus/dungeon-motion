@@ -50,3 +50,31 @@ test("MDX converter round-trips every editor atom as a fixed point", async ({
 
   expect(result.mdx2).toBe(result.mdx1);
 });
+
+test("hand-authored single-line <Line> and lone <Track> parse to atoms", async ({
+  page,
+}) => {
+  await page.goto("/editor");
+
+  const mdx = [
+    "# Title",
+    "",
+    '<Line kind="arrow">an arrow line</Line>',
+    "",
+    '<Line kind="chevron">a chevron line</Line>',
+    "",
+    "- [ ] <Track shape=\"circle\" filled=\"1\" total=\"2\" />",
+  ].join("\n");
+
+  const html = await page.evaluate(async (input) => {
+    // @ts-expect-error runtime module URL, not a compile-time import
+    const { mdxToHtml } = await import("/src/editor-mdx.ts");
+    return mdxToHtml(input);
+  }, mdx);
+
+  expect(html).toContain('class="te-arrow"');
+  expect(html).toContain('class="te-chevron"');
+  expect(html).toContain('class="te-task"');
+  expect(html).toContain('class="te-track"');
+  expect(html).toContain('data-shape="circle"');
+});

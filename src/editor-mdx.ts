@@ -199,10 +199,7 @@ function blockToDom(node: RootContent): HTMLElement | null {
 
 function salvageBlock(children: RootContent[]): HTMLElement | null {
   const el = document.createElement("p");
-  for (const child of children) {
-    if ("children" in child) appendPhrasing(el, child.children as PhrasingContent[]);
-    else if ("value" in child) el.append(document.createTextNode(child.value));
-  }
+  appendBlocksInline(el, children);
   return el.childNodes.length > 0 ? el : null;
 }
 
@@ -219,26 +216,20 @@ function listItemToDom(item: ListItem): HTMLElement {
     li.className = "te-task";
     li.append(buildToggleElement("square", item.checked === true));
   }
-  appendPhrasing(li, itemPhrasing(item));
+  appendBlocksInline(li, item.children);
   return li;
 }
 
-function itemPhrasing(item: ListItem): PhrasingContent[] {
-  const first = item.children[0];
-  if (first?.type === "paragraph") return first.children;
-  const out: PhrasingContent[] = [];
-  for (const child of item.children)
-    if ("children" in child) out.push(...(child.children as PhrasingContent[]));
-  return out;
+function lineToDom(node: MdxJsxFlowElement): HTMLElement {
+  const el = document.createElement("p");
+  el.className =
+    attributeOf(node, "kind") === "chevron" ? "te-chevron" : "te-arrow";
+  appendBlocksInline(el, node.children);
+  return el;
 }
 
 function flowElementToDom(node: MdxJsxFlowElement): HTMLElement | null {
-  if (node.name === "Line") {
-    const el = document.createElement("p");
-    el.className = attributeOf(node, "kind") === "chevron" ? "te-chevron" : "te-arrow";
-    appendPhrasing(el, flowPhrasing(node.children));
-    return el;
-  }
+  if (node.name === "Line") return lineToDom(node);
   if (node.name === "Track") {
     const el = document.createElement("p");
     el.append(trackToDom(node));
@@ -247,15 +238,20 @@ function flowElementToDom(node: MdxJsxFlowElement): HTMLElement | null {
   return null;
 }
 
-function flowPhrasing(
-  children: MdxJsxFlowElement["children"],
-): PhrasingContent[] {
-  const first = children[0];
-  if (children.length === 1 && first?.type === "paragraph") return first.children;
-  const out: PhrasingContent[] = [];
-  for (const child of children)
-    if ("children" in child) out.push(...(child.children as PhrasingContent[]));
-  return out;
+function appendBlocksInline(parent: HTMLElement, children: RootContent[]): void {
+  for (const child of children) {
+    if (child.type === "paragraph") {
+      appendPhrasing(parent, child.children);
+    } else if (child.type === "mdxJsxFlowElement") {
+      if (child.name === "Track") parent.append(trackToDom(child));
+      else if (child.name === "Line") parent.append(lineToDom(child));
+      else appendBlocksInline(parent, child.children);
+    } else if ("children" in child) {
+      appendBlocksInline(parent, child.children as RootContent[]);
+    } else if ("value" in child) {
+      parent.append(document.createTextNode(child.value));
+    }
+  }
 }
 
 function appendPhrasing(parent: HTMLElement, nodes: PhrasingContent[]): void {

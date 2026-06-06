@@ -56,6 +56,18 @@ export async function writeDocument(
     import("./editor-mdx"),
     handle.createWritable(),
   ]);
-  await writable.write(htmlToMdx(html));
-  await writable.close();
+  let closed = false;
+  try {
+    await writable.write(htmlToMdx(html));
+    await writable.close();
+    closed = true;
+  } finally {
+    if (!closed) {
+      try {
+        await writable.abort();
+      } catch (error) {
+        console.warn("text-editor: could not abort failed file write", error);
+      }
+    }
+  }
 }

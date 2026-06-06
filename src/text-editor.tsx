@@ -334,7 +334,13 @@ export function TextEditor() {
       }
       if (key === "o") {
         event.preventDefault();
-        void handleOpenFile();
+        void (async () => {
+          if (file.name !== null) {
+            const closed = await file.close(serializeDocument(editor));
+            if (!closed) return;
+          }
+          await handleOpenFile();
+        })();
         return;
       }
     }

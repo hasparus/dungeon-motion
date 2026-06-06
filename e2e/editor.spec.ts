@@ -190,6 +190,94 @@ test.describe('/editor', () => {
     expect(await editor.evaluate((node) => (node as HTMLDivElement).spellcheck)).toBe(false);
   });
 
+  test('linked file save failure aborts the writable and reports an error', async ({ page }) => {
+    await page.addInitScript(() => {
+      const state = { aborted: false, closed: false };
+      (globalThis as unknown as { __fileState: typeof state }).__fileState = state;
+      globalThis.showSaveFilePicker = async () =>
+        ({
+          createWritable: async () => ({
+            abort: async () => {
+              state.aborted = true;
+            },
+            close: async () => {
+              state.closed = true;
+            },
+            write: async () => {
+              throw new Error('disk full');
+            },
+          }),
+          name: 'broken.mdx',
+        }) as unknown as FileSystemFileHandle;
+      globalThis.showOpenFilePicker = async () => [];
+    });
+
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+    await editor.pressSequentially('broken save');
+
+    await page.getByRole('button', { name: '[save]' }).click();
+
+    await expect(page.getByText('broken.mdx · save failed')).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(() => (globalThis as unknown as { __fileState: { aborted: boolean } }).__fileState.aborted),
+      )
+      .toBe(true);
+    expect(
+      await page.evaluate(() => (globalThis as unknown as { __fileState: { closed: boolean } }).__fileState.closed),
+    ).toBe(false);
+  });
+
+  test('Ctrl+O flushes the linked file before opening another file', async ({ page }) => {
+    await page.addInitScript(() => {
+      const state = { events: [] as string[], writes: [] as string[] };
+      (globalThis as unknown as { __fileState: typeof state }).__fileState = state;
+      const currentHandle = {
+        createWritable: async () => ({
+          abort: async () => {
+            state.events.push('abort-current');
+          },
+          close: async () => {
+            state.events.push('close-current');
+          },
+          write: async (chunk: string) => {
+            state.events.push('write-current');
+            state.writes.push(chunk);
+          },
+        }),
+        name: 'current.mdx',
+      } as unknown as FileSystemFileHandle;
+      const nextHandle = {
+        getFile: async () => ({
+          text: async () => '# opened file',
+        }),
+        name: 'next.mdx',
+      } as unknown as FileSystemFileHandle;
+      globalThis.showSaveFilePicker = async () => currentHandle;
+      globalThis.showOpenFilePicker = async () => {
+        state.events.push('open-picker');
+        return [nextHandle];
+      };
+    });
+
+    await page.goto('/editor');
+    const editor = await resetEditor(page);
+    await editor.pressSequentially('current file');
+    await page.getByRole('button', { name: '[save]' }).click();
+    await expect(page.getByText('current.mdx')).toBeVisible();
+
+    await editor.pressSequentially(' changed');
+    await page.keyboard.press('Control+O');
+
+    await expect(page.getByRole('heading', { level: 1, name: 'opened file' })).toBeVisible();
+    const state = await page.evaluate(() =>
+      (globalThis as unknown as { __fileState: { events: string[]; writes: string[] } }).__fileState,
+    );
+    expect(state.events.indexOf('close-current')).toBeLessThan(state.events.indexOf('open-picker'));
+    expect(state.writes.at(-1)).toContain('changed');
+  });
+
   test('captures a spellcheck screenshot flow with gibberish after two button presses', async ({ page }) => {
     test.skip(process.platform !== 'darwin', 'font rendering varies across platforms; darwin-only baseline');
 

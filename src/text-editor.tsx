@@ -351,7 +351,7 @@ export function TextEditor() {
           aria-label="Editor"
           autoCapitalize={spellcheck ? "sentences" : "off"}
           autoCorrect={spellcheck ? "on" : "off"}
-          className={`${styles.editor} min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-[1.7] print:min-h-0 print:text-black`}
+          className={`${styles.editor} min-h-[75vh] w-full border-0 bg-transparent outline-none text-[1.22rem] leading-normal print:min-h-0 print:text-black`}
           contentEditable
           onBlur={handleBlur}
           onClick={handleClick}

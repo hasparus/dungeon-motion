@@ -443,14 +443,14 @@ export function TextEditor() {
                   onClick={() => void handleOpenFile()}
                   type="button"
                 >
-                  [open file]
+                  [open]
                 </button>
                 <button
                   className={controlButton}
                   onClick={() => void handleSaveFile()}
                   type="button"
                 >
-                  [save as…]
+                  [save]
                 </button>
               </>
             ) : (

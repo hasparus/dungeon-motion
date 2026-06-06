@@ -20,6 +20,7 @@
     "perfect-freehand": "^1.2.3",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "remark-mdx": "3.1.1",
     "y-webrtc": "^10.3.0",
     "yjs": "^13.6.29"
   },
@@ -31,6 +32,7 @@
     "eslint": "^9.39.2",
     "eslint-plugin-perfectionist": "^5.2.0",
     "eslint-plugin-unicorn": "^62.0.0",
+    "fast-check": "4.8.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.51.0"
   }
